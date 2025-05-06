@@ -4,7 +4,7 @@ const {createUser,getUser,getAllUser,deleteUser,updateUser,
 const {createService,getService, updateService,
 } = require("../controllers/serviceController");
 const { login } = require("../controllers/authController");
-const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer,
+const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale,
 } = require("../controllers/customerController");
 const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale,
 } = require("../controllers/saleController");
@@ -52,6 +52,7 @@ router.post("/attendance", createAttendence);
 // Customer Routes
 router.get("/customer", getCustomer);
 router.get("/customer/employee/:id", getEmpCustomer);
+router.get("/customer-Not-Sale/employee/:id", getEmpCustomerNotSale);
 router.put("/customer/:id", updateCustomer);
 router.post("/customer", createCustomer);
 router.post("/reffers-customer", createRefferedCustomer);

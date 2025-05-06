@@ -1,4 +1,5 @@
 const Customer = require("../models/Customer");
+const Sales = require("../models/Sales");
 
 const createCustomer = async (req, res) => {
   try {
@@ -157,6 +158,68 @@ const getEmpCustomer = async (req, res) => {
     });
   }
 };
+const getEmpCustomerNotSale = async (req, res) => {
+  try {
+    const employee_ID = req.params.id;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    // Step 1: Get all customer IDs from sales assigned to this employee
+    const sales = await Sales.find({ assignedEmployee: employee_ID }).select('customer');
+    const soldCustomerIds = sales.map(sale => sale.customer.toString());
+
+    // Step 2: Query customers created by employee but not in soldCustomerIds
+    const total = await Customer.countDocuments({
+      createdBy: employee_ID,
+      _id: { $nin: soldCustomerIds },
+    });
+
+    const customer = await Customer.find({
+      createdBy: employee_ID,
+      _id: { $nin: soldCustomerIds },
+    })
+      .populate({
+        path: "purchasedService",
+        select: "_id name createdAt description",
+      })
+      .populate({
+        path: "createdBy",
+        select: "_id name email role",
+      })
+      .populate({
+        path: "reffers",
+        select: "_id name email",
+      })
+      .populate({
+        path: "refferedBy",
+        select: "_id name email phone address",
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      message: "Customers created by employee without a sale",
+      data: customer,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+    });
+  }
+};
+
 
 const updateCustomer = async (req, res) => {
   try {
@@ -201,6 +264,7 @@ const deleteCustomer = async (req, res) => {
 module.exports = {
   createCustomer,
   createRefferedCustomer,
+  getEmpCustomerNotSale,
   getCustomer,
   getEmpCustomer,
   updateCustomer,

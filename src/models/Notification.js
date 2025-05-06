@@ -2,8 +2,7 @@ const mongoose = require('mongoose')
 
 const NotificationSchema = new mongoose.Schema({
   title: {
-    type: String,
-    required: true,
+    type: String
   },
   callback: {
     type: mongoose.Schema.Types.ObjectId,

@@ -12,6 +12,15 @@ const createMacAddress = async (req, res) => {
       });
     }
 
+    const existing = await MacAddress.findOne({ macAddress: macAddress });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Existed MacAddress ",
+      });
+    }
+
     const newMac = new MacAddress({ macAddress });
     const savedMac = await newMac.save();
 

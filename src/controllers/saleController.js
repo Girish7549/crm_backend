@@ -98,7 +98,7 @@ const createSale1 = async (req, res) => {
       assignedEmployee,
       totalAmount: totalAmountPrice,
       status,
-      paymentProof
+      paymentProof,
     });
 
     await newSale.save();
@@ -122,7 +122,7 @@ const createSale1 = async (req, res) => {
       message: "Internal server error",
     });
   }
-}; 
+};
 
 const createSale = async (req, res) => {
   try {
@@ -186,7 +186,6 @@ const createSale = async (req, res) => {
     });
   }
 };
-
 
 const getAllSale = async (req, res) => {
   try {
@@ -523,9 +522,10 @@ const updateSale = async (req, res) => {
     }
 
     // ✅ Always parse saleItems
-    const parsedSaleItems = typeof req.body.saleItems === 'string'
-      ? JSON.parse(req.body.saleItems)
-      : req.body.saleItems;
+    const parsedSaleItems =
+      typeof req.body.saleItems === "string"
+        ? JSON.parse(req.body.saleItems)
+        : req.body.saleItems;
 
     updateData.saleItems = parsedSaleItems; // ✅ move here so it's always applied
 
@@ -558,8 +558,15 @@ const updateSale = async (req, res) => {
         "audio"
       );
 
-      updateData.voiceProof = uploadedAudioUrl; // Save as string
+      updateData.voiceProof = uploadedAudioUrl; 
     }
+    // const parsedSaleItem = JSON.parse(saleItems);
+    const totalAmountPrice = parsedSaleItems.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
+    console.log("Reduced Amount :", totalAmountPrice)
+    updateData.totalAmount = totalAmountPrice; 
 
     const updatedSale = await Sales.findByIdAndUpdate(saleId, updateData, {
       new: true,
@@ -579,7 +586,6 @@ const updateSale = async (req, res) => {
     });
   }
 };
-
 
 // Upload function supporting both image & audio
 const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
