@@ -1,4 +1,5 @@
 const Sales = require("../models/Sales");
+const SaleActivation = require("../models/SaleActivation");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinaryConfig");
 const mongoose = require("mongoose");
@@ -165,12 +166,24 @@ const createSale = async (req, res) => {
 
     await newSale.save();
 
+    // Populate assignedEmployee to get name
+    await newSale.populate({
+      path: "assignedEmployee",
+      select: "name email phone team",
+    });
+
     const io = req.app.get("io");
 
     io.emit("new-sale", {
       message: "A new sale has been created!",
       saleId: newSale._id,
-      assignedEmployee: newSale.assignedEmployee._id,
+      assignedEmployee: {
+        id: newSale.assignedEmployee._id,
+        name: newSale.assignedEmployee.name,
+        email: newSale.assignedEmployee.email,
+        phone: newSale.assignedEmployee.phone,
+        team: newSale.assignedEmployee.team,
+      },
     });
 
     res.status(200).json({
@@ -558,15 +571,15 @@ const updateSale = async (req, res) => {
         "audio"
       );
 
-      updateData.voiceProof = uploadedAudioUrl; 
+      updateData.voiceProof = uploadedAudioUrl;
     }
     // const parsedSaleItem = JSON.parse(saleItems);
-    const totalAmountPrice = parsedSaleItems.reduce(
+    const totalAmountPrice = parsedSaleItems?.reduce(
       (sum, item) => sum + item.amount,
       0
     );
-    console.log("Reduced Amount :", totalAmountPrice)
-    updateData.totalAmount = totalAmountPrice; 
+    console.log("Reduced Amount :", totalAmountPrice);
+    updateData.totalAmount = totalAmountPrice;
 
     const updatedSale = await Sales.findByIdAndUpdate(saleId, updateData, {
       new: true,
@@ -638,15 +651,53 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
 //   }
 // };
 
-const deleteSale = async (req, res) => {
+const getUnactivatedSalesByTeam = async (req, res) => {
   try {
-    const saleId = req.params.id;
-    const deletedSale = await Sales.findByIdAndDelete(saleId);
+    const teamId = req.params.teamId;
+
+    const activatedSales = await SaleActivation.find({}, "sale");
+    const activatedSaleIds = activatedSales.map((act) => act.sale.toString());
+
+    const unactivatedSales = await Sales.find()
+      .populate({
+        path: "assignedEmployee",
+        select: "name email team",
+        populate: {
+          path: "team",
+          select: "_id name",
+        },
+      })
+      .populate("customer")
+      .where("assignedEmployee.team")
+      .equals(teamId)
+      .where("_id")
+      .nin(activatedSaleIds);
 
     res.status(200).json({
       success: true,
-      message: "Sale delete successfully",
-      data: deletedSale,
+      message: "Sales not in SaleActivation for given team",
+      data: unactivatedSales,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const deleteSale = async (req, res) => {
+  try {
+    const saleId = req.params.id;
+    const deleteActivation = await SaleActivation.deleteMany({ sale: saleId });
+    const deletedSale = await Sales.findByIdAndDelete(saleId);
+    const response = [deleteActivation, deletedSale];
+
+    res.status(200).json({
+      success: true,
+      message: "Sale & Activation delete successfully",
+      data: response,
     });
   } catch (err) {
     console.log(err);
@@ -662,6 +713,7 @@ module.exports = {
   getAllSale,
   getSaleByEmp,
   getTeamPendingSale,
+  getUnactivatedSalesByTeam,
   updateSale,
   deleteSale,
   getSalesByTeam,

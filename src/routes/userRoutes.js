@@ -6,7 +6,7 @@ const {createService,getService, updateService,
 const { login } = require("../controllers/authController");
 const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale,
 } = require("../controllers/customerController");
-const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale,
+const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam,
 } = require("../controllers/saleController");
 const {createFollowUp,getAllFollowUps,getFollowUpById,deleteFollowUp,updateFollowUp,
 } = require("../controllers/followupController");
@@ -85,31 +85,15 @@ router.get("/sales", getAllSale);
 router.get("/sales/team/:id", getSalesByTeam);
 router.get("/sales/employee/:id", getSaleByEmp);
 router.get("/sales/team-pending/:id", getTeamPendingSale);
+router.get("/sales/not-activate/:id", getUnactivatedSalesByTeam);
+router.put("/sale/:id",upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 },]), updateSale);
+router.post('/sale',upload.fields([{ name: 'paymentProof', maxCount: 5 },{ name: 'voiceProof', maxCount: 1 },]),createSale);
+router.delete("/sale/:id", deleteSale);
 // router.post("/sale", upload.single("paymentProof"), createSale);
 // router.put("/sale/:id", upload.array("paymentProof", 5), updateSale); // 5 image ki limit lagai hai bss
 // For multiple fields (PUT request for update)
-router.put(
-  "/sale/:id",
-  upload.fields([
-    { name: "paymentProof", maxCount: 5 },
-    { name: "voiceProof", maxCount: 1 },
-  ]),
-  updateSale
-);
-
 // For single file (POST request for create)
-router.post(
-  '/sale',
-  upload.fields([
-    { name: 'paymentProof', maxCount: 5 },
-    { name: 'voiceProof', maxCount: 1 }, // optional
-  ]),
-  createSale
-);
-
 // router.post("/sale", upload.single("paymentProof"), createSale);
-
-router.delete("/sale/:id", deleteSale);
 
 // Sale Activation Routes
 router.post("/activations", createActivation);

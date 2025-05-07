@@ -8,6 +8,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message");
 const PersonalMessage = require("./models/PersonalMessage");
+const Sales = require("./models/Sales");
 require("dotenv").config();
 
 const app = express();
@@ -67,13 +68,21 @@ io.on("connection", (socket) => {
   });
 
   // Sale create alert
-  socket.on("createSale", (data) => {
+  socket.on("createSale", async (data) => {
     const { assignedEmployee, saleId } = data;
+    const employee = await Sales.findById(saleId).populate({
+      path: "assignedEmployee",
+      select: "name email role team",
+      populate: {
+        path: "team",
+        select: "name",
+      },
+    });
 
     io.emit("new-sale", {
       message: "A new sale has been created!",
       saleId,
-      assignedEmployee,
+      assignedEmployee: employee,
     });
   });
 
@@ -146,7 +155,6 @@ app.get("/", (req, res) => {
     </html>
   `);
 });
-
 
 // Start Server
 const PORT = process.env.PORT || 3000;
