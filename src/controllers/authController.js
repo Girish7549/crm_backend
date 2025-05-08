@@ -107,12 +107,12 @@ const login = async (req, res) => {
         OFFICE_RADIUS_METERS
       );
 
-      // if (!isInsideOffice) {
-      //   return res.status(403).json({
-      //     success: false,
-      //     message: "You must be inside the office to log in.",
-      //   });
-      // }
+      if (!isInsideOffice) {
+        return res.status(403).json({
+          success: false,
+          message: "You must be inside the office to log in.",
+        });
+      }
     }
     
     if (!user) {

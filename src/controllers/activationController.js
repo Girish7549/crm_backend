@@ -247,13 +247,13 @@ const createActivation = async (req, res) => {
     const activation = new SaleActivation(req.body);
     await activation.save();
 
-    const emp = await User.findById(activation.assignedEmployee)
+    const emp = await User.findById(activation.assignedEmployee);
 
     const io = req.app.get("io");
 
     io.emit("new-activation", {
       message: "A new activation has been created!",
-      teamId: emp.team, 
+      teamId: emp.team,
       activationId: activation._id,
     });
 
@@ -732,11 +732,49 @@ const deleteActivation = async (req, res) => {
   }
 };
 
+const searchActivationsByPhone = async (req, res) => {
+  try {
+    const { number, page = 1, limit = 10 } = req.query;
+
+    // Step 1: Find the customers whose phone number matches the given query
+    const customers = await Customer.find({
+      phone: { $regex: number, $options: 'i' } // Case-insensitive regex search for partial phone number
+    }).select('_id'); // We only need the _id field
+
+    // Step 2: If no customers are found, return an error message
+    if (customers.length === 0) {
+      return res.status(404).json({ message: 'No customers found with that phone number.' });
+    }
+
+    // Step 3: Extract the customer IDs from the result and convert to ObjectId format
+    const customerIds = customers.map(customer => mongoose.Types.ObjectId(customer._id));
+
+    // Step 4: Query the Activation model to get activations associated with these customers
+    const activations = await SaleActivation.find({
+      customer: { $in: customerIds }
+    })
+      .skip((page - 1) * limit) // Apply pagination: (page - 1) * limit
+      .limit(parseInt(limit)) // Limit the number of results per page
+      .populate('sale') // Populate the Sale reference (optional, if needed)
+      .populate('assignedEmployee') // Populate the assignedEmployee reference (optional, if needed)
+      .exec();
+
+    // Step 5: Return the matching activations
+    return res.json(activations);
+  } catch (error) {
+    console.error('Error fetching activations by phone number:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+
 module.exports = {
   createActivation,
   getAllActivations,
   getTeamActivations,
   getTeamStatusFilterActivations,
+  searchActivationsByPhone,
   getAllSupportActivation,
   addMonthInActivation,
   getActivationById,

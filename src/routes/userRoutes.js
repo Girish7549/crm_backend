@@ -6,7 +6,7 @@ const {createService,getService, updateService,
 const { login } = require("../controllers/authController");
 const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale,
 } = require("../controllers/customerController");
-const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam,
+const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone,
 } = require("../controllers/saleController");
 const {createFollowUp,getAllFollowUps,getFollowUpById,deleteFollowUp,updateFollowUp,
 } = require("../controllers/followupController");
@@ -19,7 +19,7 @@ const {getAllTrials,getTrialsByEmployeeId,updateTrial,createTrial,deleteTrial,ge
 const {getMessage,createMessage,
 } = require("../controllers/messageController");
 const { createTeam, getAllTeams } = require("../controllers/teamController");
-const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations,
+const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, searchActivationsByPhone,
 } = require("../controllers/activationController");
 const {getPersonalMessage,
 } = require("../controllers/personalMessageController");
@@ -89,6 +89,7 @@ router.get("/sales/not-activate/:id", getUnactivatedSalesByTeam);
 router.put("/sale/:id",upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 },]), updateSale);
 router.post('/sale',upload.fields([{ name: 'paymentProof', maxCount: 5 },{ name: 'voiceProof', maxCount: 1 },]),createSale);
 router.delete("/sale/:id", deleteSale);
+router.get("/sales/search", searchSalesByPhone)
 // router.post("/sale", upload.single("paymentProof"), createSale);
 // router.put("/sale/:id", upload.array("paymentProof", 5), updateSale); // 5 image ki limit lagai hai bss
 // For multiple fields (PUT request for update)
@@ -105,6 +106,7 @@ router.get("/activations/support/:id", getAllSupportActivation);
 router.put("/activations/:id", updateActivation);
 router.put("/activations/addMonth/:id", addMonthInActivation);
 router.delete("/activations/:id", deleteActivation);
+router.get("/activations/search", searchActivationsByPhone);
 
 // Trial Activation Routes
 router.post("/trialActivations", createTrialActivation);

@@ -708,12 +708,108 @@ const deleteSale = async (req, res) => {
   }
 };
 
+const searchSalesByPhone = async (req, res) => {
+  try {
+    const number = req.query.number?.trim();
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    if (!number) {
+      return res.status(400).json({
+        success: false,
+        message: "Search number is required",
+      });
+    }
+
+    const pipeline = [
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: {
+          path: "$customer",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          "customer.phone": { $regex: number, $options: "i" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "assignedEmployee",
+          foreignField: "_id",
+          as: "assignedEmployee",
+        },
+      },
+      {
+        $unwind: {
+          path: "$assignedEmployee",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "assignedEmployee.team",
+          foreignField: "_id",
+          as: "assignedEmployee.team",
+        },
+      },
+      {
+        $unwind: {
+          path: "$assignedEmployee.team",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $facet: {
+          data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
+
+    const result = await Sales.aggregate(pipeline);
+    const sales = result[0]?.data || [];
+    const total = result[0]?.totalCount[0]?.count || 0;
+
+    return res.status(200).json({
+      success: true,
+      message: "Sales matched by phone number",
+      data: sales,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error searching sales by phone:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
 module.exports = {
   createSale,
   getAllSale,
   getSaleByEmp,
   getTeamPendingSale,
   getUnactivatedSalesByTeam,
+  searchSalesByPhone,
   updateSale,
   deleteSale,
   getSalesByTeam,
