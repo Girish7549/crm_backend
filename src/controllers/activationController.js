@@ -241,8 +241,9 @@ const SaleActivation = require("../models/SaleActivation");
 const Sales = require("../models/Sales");
 const mongoose = require("mongoose");
 const User = require("../models/User");
+// const SaleActivation = require("../models/SaleActivation");
 // Create Activation
-const createActivation = async (req, res) => {
+const createActivationOld = async (req, res) => {
   try {
     const activation = new SaleActivation(req.body);
     await activation.save();
@@ -267,6 +268,84 @@ const createActivation = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+const createActivation = async (req, res) => {
+  try {
+    const {
+      sale: saleId,
+      customer,
+      deviceInfo,
+      assignedEmployee,
+      appInfo,
+      notes,
+    } = req.body;
+
+    const sale = await Sales.findById(saleId);
+    if (!sale) {
+      return res.status(404).json({ success: false, message: "Sale not found" });
+    }
+
+    const createdDate = new Date(sale.createdAt);
+    const today = new Date();
+
+    // Normalize both to compare just the date (not time)
+    const isBeforeToday =
+      createdDate.toDateString() !== today.toDateString() &&
+      createdDate.getTime() < today.getTime();
+
+    const activationData = {
+      sale: saleId,
+      customer,
+      deviceInfo,
+      appInfo,
+      notes,
+      assignedEmployee,
+    };
+
+    if (isBeforeToday) {
+      let monthsPassed =
+        (today.getFullYear() - createdDate.getFullYear()) * 12 +
+        (today.getMonth() - createdDate.getMonth());
+
+      if (today.getDate() >= createdDate.getDate()) {
+        monthsPassed += 1;
+      }
+
+      const totalMonths = deviceInfo?.totalMonths || 1;
+      const currentMonth = Math.min(monthsPassed, totalMonths);
+
+      const expirationDate = new Date(createdDate);
+      expirationDate.setMonth(expirationDate.getMonth() + currentMonth);
+
+      activationData.currentMonth = currentMonth;
+      activationData.expirationDate = expirationDate;
+      activationData.status = "active"; // Set active only if sale is in the past
+    }
+
+    const activation = new SaleActivation(activationData);
+    await activation.save();
+
+    const emp = await User.findById(assignedEmployee);
+    const io = req.app.get("io");
+
+    io.emit("new-activation", {
+      message: "A new activation has been created!",
+      teamId: emp.team,
+      activationId: activation._id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Activation Sale created successfully",
+      data: activation,
+    });
+  } catch (err) {
+    console.error("Error creating activation:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
 
 // Get All Activations (Paginated)
 const getAllActivations = async (req, res) => {
@@ -595,62 +674,6 @@ const updateActivation = async (req, res) => {
   }
 };
 
-// const addMonthInActivation = async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const {addMonth} = req.body
-//     const activation = await SaleActivation.findById(id);
-
-//     if (!activation) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Activation not found",
-//       });
-//     }
-
-//     if (activation.deviceInfo.totalMonths === activation.currentMonth) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Subscription Over (0 Month Remaining) --> Renew The Subscription",
-//       });
-//     }
-
-//     //  Add 1 month to expirationDate
-//     const currentExpiration = activation.expirationDate || new Date();
-//     const newExpiration = new Date(currentExpiration);
-//     newExpiration.setMonth(newExpiration.getMonth() + 1);
-
-//     const updatedData = {
-//       ...req.body,
-//       currentMonth: activation.currentMonth + 1,
-//       status: "active",
-//       expirationDate: newExpiration,
-//       updatedAt: Date.now(),
-//     };
-
-//     const updatedActivation = await SaleActivation.findByIdAndUpdate(
-//       id,
-//       updatedData,
-//       { new: true, runValidators: true }
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Month added successfully",
-//       data: updatedActivation,
-//     });
-
-//   } catch (err) {
-//     console.log("Internal Server Error :", err);
-//     res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
-
-// Delete Activation
-
 const addMonthInActivation = async (req, res) => {
   try {
     const id = req.params.id;
@@ -710,6 +733,126 @@ const addMonthInActivation = async (req, res) => {
     });
   }
 };
+const oldSaleUpdate1 = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { oldDate } = req.body;
+
+    console.log("OLD DATE (input):", oldDate);
+
+    // Validate oldDate
+    const createdDate = new Date(oldDate);
+    if (isNaN(createdDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid oldDate format. Please provide a valid date.",
+      });
+    }
+
+    const saleActivation = await SaleActivation.findById(id);
+    if (!saleActivation) {
+      return res.status(404).json({
+        success: false,
+        message: "Sale Activation not found",
+      });
+    }
+
+    const currentDate = new Date();
+
+    const passedMonths =
+      (currentDate.getFullYear() - createdDate.getFullYear()) * 12 +
+      (currentDate.getMonth() - createdDate.getMonth());
+
+    console.log("Passed months:", passedMonths);
+
+    const remainingMonths = Math.max(
+      saleActivation.deviceInfo.totalMonths - passedMonths,
+      0
+    );
+
+    console.log("Remaining months:", remainingMonths);
+
+    const newExpirationDate = new Date(createdDate);
+    newExpirationDate.setMonth(newExpirationDate.getMonth() + remainingMonths);
+
+    if (isNaN(newExpirationDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Failed to calculate valid expiration date",
+      });
+    }
+
+    saleActivation.createdAt = createdDate;
+    saleActivation.deviceInfo.totalMonths = remainingMonths;
+    saleActivation.expirationDate = newExpirationDate;
+
+    await saleActivation.save();
+
+    res.json({
+      success: true,
+      message: "Sale Activation updated successfully",
+      data: saleActivation,
+    });
+  } catch (err) {
+    console.error("Internal Server Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+const oldSaleUpdate = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { oldDate } = req.body;
+
+    const saleActivation = await SaleActivation.findById(id);
+    if (!saleActivation) {
+      return res.status(404).json({
+        success: false,
+        message: "Sale Activation not found",
+      });
+    }
+
+    const createdDate = new Date(oldDate);
+    const currentDate = new Date();
+
+    // Calculate months passed
+    // How many full months have passed since oldDate
+    const passedMonths =
+      (currentDate.getFullYear() - createdDate.getFullYear()) * 12 +
+      (currentDate.getMonth() - createdDate.getMonth());
+
+    const currentMonth = Math.min(
+      passedMonths + 1,
+      saleActivation.deviceInfo.totalMonths
+    );
+
+    // New expiration date: just 1 month ahead of createdDate
+    const newExpirationDate = new Date(createdDate);
+    newExpirationDate.setMonth(newExpirationDate.getMonth() + 1);
+
+    // Update fields
+    saleActivation.createdAt = createdDate;
+    saleActivation.currentMonth = currentMonth;
+    saleActivation.expirationDate = newExpirationDate;
+
+    await saleActivation.save();
+
+    res.json({
+      success: true,
+      message: "Sale Activation updated successfully",
+      data: saleActivation,
+    });
+  } catch (err) {
+    console.error("Internal Server Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 const deleteActivation = async (req, res) => {
   try {
@@ -732,49 +875,48 @@ const deleteActivation = async (req, res) => {
   }
 };
 
-const searchActivationsByPhone = async (req, res) => {
-  try {
-    const { number, page = 1, limit = 10 } = req.query;
+// const searchActivationsByPhone = async (req, res) => {
+//   try {
+//     const { number, page = 1, limit = 10 } = req.query;
 
-    // Step 1: Find the customers whose phone number matches the given query
-    const customers = await Customer.find({
-      phone: { $regex: number, $options: 'i' } // Case-insensitive regex search for partial phone number
-    }).select('_id'); // We only need the _id field
+//     // Step 1: Find the customers whose phone number matches the given query
+//     const customers = await Customer.find({
+//       phone: { $regex: number, $options: 'i' } // Case-insensitive regex search for partial phone number
+//     }).select('_id'); // We only need the _id field
 
-    // Step 2: If no customers are found, return an error message
-    if (customers.length === 0) {
-      return res.status(404).json({ message: 'No customers found with that phone number.' });
-    }
+//     // Step 2: If no customers are found, return an error message
+//     if (customers.length === 0) {
+//       return res.status(404).json({ message: 'No customers found with that phone number.' });
+//     }
 
-    // Step 3: Extract the customer IDs from the result and convert to ObjectId format
-    const customerIds = customers.map(customer => mongoose.Types.ObjectId(customer._id));
+//     // Step 3: Extract the customer IDs from the result and convert to ObjectId format
+//     const customerIds = customers.map(customer => mongoose.Types.ObjectId(customer._id));
 
-    // Step 4: Query the Activation model to get activations associated with these customers
-    const activations = await SaleActivation.find({
-      customer: { $in: customerIds }
-    })
-      .skip((page - 1) * limit) // Apply pagination: (page - 1) * limit
-      .limit(parseInt(limit)) // Limit the number of results per page
-      .populate('sale') // Populate the Sale reference (optional, if needed)
-      .populate('assignedEmployee') // Populate the assignedEmployee reference (optional, if needed)
-      .exec();
+//     // Step 4: Query the Activation model to get activations associated with these customers
+//     const activations = await SaleActivation.find({
+//       customer: { $in: customerIds }
+//     })
+//       .skip((page - 1) * limit) // Apply pagination: (page - 1) * limit
+//       .limit(parseInt(limit)) // Limit the number of results per page
+//       .populate('sale') // Populate the Sale reference (optional, if needed)
+//       .populate('assignedEmployee') // Populate the assignedEmployee reference (optional, if needed)
+//       .exec();
 
-    // Step 5: Return the matching activations
-    return res.json(activations);
-  } catch (error) {
-    console.error('Error fetching activations by phone number:', error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-};
-
-
+//     // Step 5: Return the matching activations
+//     return res.json(activations);
+//   } catch (error) {
+//     console.error('Error fetching activations by phone number:', error);
+//     return res.status(500).json({ message: 'Server error' });
+//   }
+// };
 
 module.exports = {
   createActivation,
   getAllActivations,
   getTeamActivations,
   getTeamStatusFilterActivations,
-  searchActivationsByPhone,
+  // searchActivationsByPhone,
+  oldSaleUpdate,
   getAllSupportActivation,
   addMonthInActivation,
   getActivationById,

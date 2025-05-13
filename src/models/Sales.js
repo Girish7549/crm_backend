@@ -30,6 +30,8 @@ const SaleSchema = new mongoose.Schema({
           deviceType: { type: String, required: true },
           customPrice: { type: Number, required: true },
           month: { type: Number, required: true },
+          paymentMethod: { type: String, required: true },
+          // status: { type: String, enum: ["paid", "unpaid"], default: "unpaid" },
         },
       ],
       status: {
@@ -69,7 +71,7 @@ const SaleSchema = new mongoose.Schema({
   },
   activation: {
     type: String,
-    enum: ["pending", "done",],
+    enum: ["pending", "done"],
     default: "pending",
   },
   createdAt: {

@@ -134,6 +134,7 @@ const createSale = async (req, res) => {
       paymentMethod,
       assignedEmployee,
       status,
+      createdAt,
     } = req.body;
 
     const parsedSaleItems = JSON.parse(saleItems);
@@ -152,16 +153,35 @@ const createSale = async (req, res) => {
         )
       );
     }
+    console.log(
+      "Frontend Data :",
+      customer,
+      service,
+      saleItems,
+      paymentMethod,
+      assignedEmployee,
+      status,
+      createdAt
+    );
+
+    const uniquePaymentMethods = [
+      ...new Set(
+        parsedSaleItems.flatMap((item) =>
+          item.devices.map((device) => device.paymentMethod)
+        )
+      ),
+    ];
 
     const newSale = new Sales({
       customer,
       service,
       saleItems: parsedSaleItems,
-      paymentMethod,
+      paymentMethod: uniquePaymentMethods.join(" / "),
       assignedEmployee,
       totalAmount: totalAmountPrice,
       status,
       paymentProof: uploadedImageUrls,
+      createdAt: createdAt ? createdAt : Date.now(),
     });
 
     await newSale.save();
@@ -277,6 +297,117 @@ const getSaleByEmp = async (req, res) => {
     });
   }
 };
+
+const getSalesByEmployeeAndDateRange1 = async (req, res) => {
+  try {
+    const { dateRange } = req.body;
+    const empId = req.params.id;
+    console.log("Employee ID :", empId)
+    console.log("dateRange  :", dateRange)
+
+    if (!empId || !Array.isArray(dateRange) || dateRange.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: "employeeId and valid dateRange are required",
+      });
+    }
+
+    const [startDate, endDate] = dateRange;
+
+    const sales = await Sales.find({
+      assignedEmployee: empId,
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+    }).populate({
+        path: "assignedEmployee",
+        select: "_id name role team",
+        populate: {
+          path: "team",
+          select: "_id name description",
+        },
+      })
+      .populate({
+        path: "customer",
+        // select: "_id name role"
+      })
+      .populate({
+        path: "saleItems",
+        // select: "_id name role"
+      });
+
+    res.status(200).json({
+      success: true,
+      data: sales,
+    });
+  } catch (error) {
+    console.error("Error fetching sales:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+const getSalesByEmployeeAndDateRange = async (req, res) => {
+  try {
+    const { dateRange } = req.body;
+    const empId = req.params.id;
+
+    console.log("Employee ID:", empId);
+    console.log("Date Range:", dateRange);
+
+    if (!empId || !Array.isArray(dateRange) || dateRange.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: "employeeId and valid dateRange are required",
+      });
+    }
+
+    // Normalize start and end of date
+    const [startDateRaw, endDateRaw] = dateRange;
+    const startDate = new Date(startDateRaw);
+    const endDate = new Date(endDateRaw);
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    const sales = await Sales.find({
+      assignedEmployee: new mongoose.Types.ObjectId(empId),
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    })
+      .populate({
+        path: "assignedEmployee",
+        select: "_id name role team",
+        populate: {
+          path: "team",
+          select: "_id name description",
+        },
+      })
+      .populate("customer")
+      .populate("saleItems");
+
+    res.status(200).json({
+      success: true,
+      message: "Sales fetched successfully",
+      data: sales,
+    });
+  } catch (error) {
+    console.error("Error fetching sales:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = getSalesByEmployeeAndDateRange;
+
 
 const getSalesByTeam = async (req, res) => {
   try {
@@ -581,6 +712,16 @@ const updateSale = async (req, res) => {
     console.log("Reduced Amount :", totalAmountPrice);
     updateData.totalAmount = totalAmountPrice;
 
+    // Payment Method Update by device
+    const uniquePaymentMethods = [
+      ...new Set(
+        updateData.saleItems.flatMap((item) =>
+          item.devices.map((d) => d.paymentMethod)
+        )
+      ),
+    ];
+    updateData.paymentMethod = uniquePaymentMethods.join(" / ");
+
     const updatedSale = await Sales.findByIdAndUpdate(saleId, updateData, {
       new: true,
       runValidators: true,
@@ -772,7 +913,11 @@ const searchSalesByPhone = async (req, res) => {
       },
       {
         $facet: {
-          data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit }],
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
           totalCount: [{ $count: "count" }],
         },
       },
@@ -802,13 +947,13 @@ const searchSalesByPhone = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createSale,
   getAllSale,
   getSaleByEmp,
   getTeamPendingSale,
   getUnactivatedSalesByTeam,
+  getSalesByEmployeeAndDateRange,
   searchSalesByPhone,
   updateSale,
   deleteSale,

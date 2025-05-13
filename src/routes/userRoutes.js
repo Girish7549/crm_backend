@@ -6,7 +6,7 @@ const {createService,getService, updateService,
 const { login } = require("../controllers/authController");
 const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale,
 } = require("../controllers/customerController");
-const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone,
+const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange,
 } = require("../controllers/saleController");
 const {createFollowUp,getAllFollowUps,getFollowUpById,deleteFollowUp,updateFollowUp,
 } = require("../controllers/followupController");
@@ -19,7 +19,7 @@ const {getAllTrials,getTrialsByEmployeeId,updateTrial,createTrial,deleteTrial,ge
 const {getMessage,createMessage,
 } = require("../controllers/messageController");
 const { createTeam, getAllTeams } = require("../controllers/teamController");
-const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, searchActivationsByPhone,
+const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, searchActivationsByPhone, oldSaleUpdate,
 } = require("../controllers/activationController");
 const {getPersonalMessage,
 } = require("../controllers/personalMessageController");
@@ -84,6 +84,7 @@ router.get("/teams", getAllTeams);
 router.get("/sales", getAllSale);
 router.get("/sales/team/:id", getSalesByTeam);
 router.get("/sales/employee/:id", getSaleByEmp);
+router.post("/sales/employee-date-range/:id", getSalesByEmployeeAndDateRange);
 router.get("/sales/team-pending/:id", getTeamPendingSale);
 router.get("/sales/not-activate/:id", getUnactivatedSalesByTeam);
 router.put("/sale/:id",upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 },]), updateSale);
@@ -105,8 +106,9 @@ router.get("/activations/:id", getActivationById);
 router.get("/activations/support/:id", getAllSupportActivation);
 router.put("/activations/:id", updateActivation);
 router.put("/activations/addMonth/:id", addMonthInActivation);
+router.put("/activations/oldsale/:id", oldSaleUpdate);
 router.delete("/activations/:id", deleteActivation);
-router.get("/activations/search", searchActivationsByPhone);
+// router.get("/activations/search", searchActivationsByPhone);
 
 // Trial Activation Routes
 router.post("/trialActivations", createTrialActivation);
