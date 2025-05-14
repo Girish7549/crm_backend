@@ -68,7 +68,7 @@ const getFollowUpById = async (req, res) => {
   }
 };
 
-const updateFollowUp = async (req, res) => {
+const updateFollowUp1 = async (req, res) => {
   try {
     const { notes, salesPerson } = req.body;
     const followUp = await FollowUp.findById(req.params.id);
@@ -96,6 +96,50 @@ const updateFollowUp = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+const updateFollowUp = async (req, res) => {
+  try {
+    const { notes, salesPerson } = req.body;
+    const followUp = await FollowUp.findById(req.params.id);
+
+    if (!followUp) {
+      return res.status(404).json({
+        success: false,
+        message: "Follow-up not found",
+      });
+    }
+
+    // Construct update object safely
+    let updateQuery = {};
+
+    if (notes && notes.length > 0) {
+      updateQuery.$push = { notes: notes[0] };
+    }
+
+    if (salesPerson) {
+      updateQuery.$set = { salesPerson };
+    }
+
+    // If pushing notes or salesPerson only
+    if (Object.keys(updateQuery).length > 0) {
+      await FollowUp.findByIdAndUpdate(req.params.id, updateQuery, {
+        new: true,
+        runValidators: true,
+      });
+    } else {
+      // fallback: update full body
+      await FollowUp.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+    }
+
+    res.status(200).json({ success: true, message: "Follow-up updated" });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 const deleteFollowUp = async (req, res) => {
   try {
