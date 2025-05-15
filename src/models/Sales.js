@@ -27,11 +27,13 @@ const SaleSchema = new mongoose.Schema({
       },
       devices: [
         {
+          new: {type: Boolean},
           deviceType: { type: String, required: true },
           customPrice: { type: Number, required: true },
           month: { type: Number, required: true },
-          paymentMethod: { type: String, required: true },
-          // status: { type: String, enum: ["paid", "unpaid"], default: "unpaid" },
+          paymentMethod: { type: String },
+          createdAt: { type: Date, default: Date.now },
+          status: { type: String, enum: ["paid", "unpaid"], default: "unpaid" },
         },
       ],
       status: {

@@ -302,8 +302,8 @@ const getSalesByEmployeeAndDateRange1 = async (req, res) => {
   try {
     const { dateRange } = req.body;
     const empId = req.params.id;
-    console.log("Employee ID :", empId)
-    console.log("dateRange  :", dateRange)
+    console.log("Employee ID :", empId);
+    console.log("dateRange  :", dateRange);
 
     if (!empId || !Array.isArray(dateRange) || dateRange.length !== 2) {
       return res.status(400).json({
@@ -320,7 +320,8 @@ const getSalesByEmployeeAndDateRange1 = async (req, res) => {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
-    }).populate({
+    })
+      .populate({
         path: "assignedEmployee",
         select: "_id name role team",
         populate: {
@@ -349,7 +350,6 @@ const getSalesByEmployeeAndDateRange1 = async (req, res) => {
     });
   }
 };
-
 
 const getSalesByEmployeeAndDateRange = async (req, res) => {
   try {
@@ -407,7 +407,6 @@ const getSalesByEmployeeAndDateRange = async (req, res) => {
 };
 
 module.exports = getSalesByEmployeeAndDateRange;
-
 
 const getSalesByTeam = async (req, res) => {
   try {
@@ -748,9 +747,9 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
       {
         folder: type === "audio" ? "sales/voiceNotes" : "sales/paymentProofs",
         use_filename: true,
-        public_id: originalname.split(".")[0],
+        public_id: originalname.split(".")[0].trim(),
         unique_filename: false,
-        resource_type: type === "audio" ? "video" : "image", // Audio uploads require "video"
+        resource_type: type === "audio" ? "video" : "image", 
       },
       (error, result) => {
         if (error) return reject(error);
@@ -880,9 +879,14 @@ const searchSalesByPhone = async (req, res) => {
       },
       {
         $match: {
-          "customer.phone": { $regex: number, $options: "i" },
+          $or: [
+            { "customer.phone": { $regex: number, $options: "i" } },
+            { "customer.name": { $regex: number, $options: "i" } },
+            { "customer.email": { $regex: number, $options: "i" } },
+          ],
         },
       },
+
       {
         $lookup: {
           from: "users",
