@@ -714,7 +714,7 @@ const updateSale = async (req, res) => {
     // Payment Method Update by device
     const uniquePaymentMethods = [
       ...new Set(
-        updateData.saleItems.flatMap((item) =>
+        updateData?.saleItems?.flatMap((item) =>
           item.devices.map((d) => d.paymentMethod)
         )
       ),
@@ -749,7 +749,7 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
         use_filename: true,
         public_id: originalname.split(".")[0].trim(),
         unique_filename: false,
-        resource_type: type === "audio" ? "video" : "image", 
+        resource_type: type === "audio" ? "video" : "image",
       },
       (error, result) => {
         if (error) return reject(error);
@@ -791,7 +791,7 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
 //   }
 // };
 
-const getUnactivatedSalesByTeam = async (req, res) => {
+const getUnactivatedSalesByTeam1 = async (req, res) => {
   try {
     const teamId = req.params.teamId;
 
@@ -820,6 +820,64 @@ const getUnactivatedSalesByTeam = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const getUnactivatedSalesByTeam = async (req, res) => {
+  try {
+    const teamId = req.params.id; // keep it as a string for comparison
+
+    // 1. Get all SaleActivation records to exclude activated sales
+    const activatedSales = await SaleActivation.find({}, "sale");
+    const activatedSaleIds = activatedSales.map((act) => act.sale.toString());
+
+    // 2. Get all sales with necessary fields populated
+    const allSales = await Sales.find()
+      .populate({
+        path: "assignedEmployee",
+        select: "name email team",
+        populate: {
+          path: "team",
+          select: "_id name",
+        },
+      })
+      .populate("customer");
+
+    // 3. Filter sales based on team and activation/device logic
+    const filteredSales = allSales.filter((sale) => {
+      const teamObjId = sale?.assignedEmployee?.team?._id;
+      const teamMatch = teamObjId && teamObjId.toString() === teamId;
+
+      const hasNewDevice = sale.saleItems?.some((item) =>
+        item.devices?.some((device) => device?.new === true)
+      );
+
+      const isUnactivated = !activatedSaleIds.includes(sale._id.toString());
+
+      // console.log({
+      //   saleId: sale._id.toString(),
+      //   teamObjId: teamObjId?.toString(),
+      //   teamId,
+      //   teamMatch,
+      //   hasNewDevice,
+      //   isUnactivated,
+      //   finalIncluded: teamMatch && (isUnactivated || hasNewDevice),
+      // });
+
+      return teamMatch && (isUnactivated || hasNewDevice);
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Sales with no activation or with new device(s)",
+      data: filteredSales,
+    });
+  } catch (err) {
+    console.error("Error in getUnactivatedSalesByTeam:", err);
     res.status(500).json({
       success: false,
       message: "Internal server error",

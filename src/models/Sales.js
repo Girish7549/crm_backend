@@ -27,7 +27,7 @@ const SaleSchema = new mongoose.Schema({
       },
       devices: [
         {
-          new: {type: Boolean},
+          new: { type: Boolean },
           deviceType: { type: String, required: true },
           customPrice: { type: Number, required: true },
           month: { type: Number, required: true },

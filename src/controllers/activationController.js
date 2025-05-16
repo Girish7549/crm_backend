@@ -276,7 +276,7 @@ const createActivation = async (req, res) => {
       customer,
       deviceInfo,
       assignedEmployee,
-      appInfo,
+      applicationName,
       notes,
     } = req.body;
 
@@ -297,7 +297,7 @@ const createActivation = async (req, res) => {
       sale: saleId,
       customer,
       deviceInfo,
-      appInfo,
+      applicationName,
       notes,
       assignedEmployee,
     };
@@ -324,6 +324,15 @@ const createActivation = async (req, res) => {
 
     const activation = new SaleActivation(activationData);
     await activation.save();
+
+    await Sales.updateOne(
+      { _id: saleId },
+      {
+        $set: {
+          "saleItems.$[].devices.$[].new": false, 
+        },
+      }
+    );
 
     const emp = await User.findById(assignedEmployee);
     const io = req.app.get("io");
@@ -660,6 +669,7 @@ const updateActivation = async (req, res) => {
     if (req.body.status === "active") {
       await Sales.findByIdAndUpdate(updatedActivation.sale, {
         activation: "done",
+        status: "done"
       });
     }
 
