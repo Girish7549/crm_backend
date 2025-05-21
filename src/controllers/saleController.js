@@ -910,6 +910,8 @@ const searchSalesByPhone = async (req, res) => {
   try {
     const number = req.query.number?.trim();
     const page = parseInt(req.query.page) || 1;
+    const emp = req.query.emp || '';
+    console.log("***************** ", emp, "*******************")
     const limit = 10;
     const skip = (page - 1) * limit;
 
@@ -986,8 +988,11 @@ const searchSalesByPhone = async (req, res) => {
     ];
 
     const result = await Sales.aggregate(pipeline);
-    const sales = result[0]?.data || [];
-    const total = result[0]?.totalCount[0]?.count || 0;
+    const sales = result[0]?.data.filter(sale => sale.assignedEmployee._id == emp);
+    // console.log("Sale Filter:", sales)
+    // console.log("Sale :", result[0].data)
+
+    const total = sales.length;
 
     return res.status(200).json({
       success: true,

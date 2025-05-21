@@ -235,12 +235,12 @@
 //   deleteActivation,
 // };
 
-const Customer = require("../models/Customer");
 const Sale = require("../models/Sales");
 const SaleActivation = require("../models/SaleActivation");
 const Sales = require("../models/Sales");
 const mongoose = require("mongoose");
 const User = require("../models/User");
+const Customer = require("../models/Customer");
 // const SaleActivation = require("../models/SaleActivation");
 // Create Activation
 const createActivationOld = async (req, res) => {
@@ -268,7 +268,6 @@ const createActivationOld = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 const createActivation = async (req, res) => {
   try {
     const {
@@ -282,7 +281,9 @@ const createActivation = async (req, res) => {
 
     const sale = await Sales.findById(saleId);
     if (!sale) {
-      return res.status(404).json({ success: false, message: "Sale not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Sale not found" });
     }
 
     const createdDate = new Date(sale.createdAt);
@@ -329,7 +330,7 @@ const createActivation = async (req, res) => {
       { _id: saleId },
       {
         $set: {
-          "saleItems.$[].devices.$[].new": false, 
+          "saleItems.$[].devices.$[].new": false,
         },
       }
     );
@@ -353,9 +354,6 @@ const createActivation = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
-
-
 // Get All Activations (Paginated)
 const getAllActivations = async (req, res) => {
   try {
@@ -485,7 +483,6 @@ const getTeamActivations = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 const getTeamStatusFilterActivations = async (req, res) => {
   try {
     const teamId = req.params.id?.trim();
@@ -544,7 +541,6 @@ const getTeamStatusFilterActivations = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 // Get Activations by Employee
 const getAllSupportActivation = async (req, res) => {
   try {
@@ -582,7 +578,6 @@ const getAllSupportActivation = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 const getTeamActivation = async (req, res) => {
   try {
     const teamId = req.params.id;
@@ -669,7 +664,7 @@ const updateActivation = async (req, res) => {
     if (req.body.status === "active") {
       await Sales.findByIdAndUpdate(updatedActivation.sale, {
         activation: "done",
-        status: "done"
+        status: "done",
       });
     }
 
@@ -885,47 +880,63 @@ const deleteActivation = async (req, res) => {
   }
 };
 
-// const searchActivationsByPhone = async (req, res) => {
-//   try {
-//     const { number, page = 1, limit = 10 } = req.query;
+const searchActivations = async (req, res) => {
+  try {
+    const page = req.query.page || 1;
+    const query = req.query.query;
+    const limit = 10
+    // const { number } = req.params.id;
 
-//     // Step 1: Find the customers whose phone number matches the given query
-//     const customers = await Customer.find({
-//       phone: { $regex: number, $options: 'i' } // Case-insensitive regex search for partial phone number
-//     }).select('_id'); // We only need the _id field
+    const customers = await Customer.find({
+      $or: [
+        { phone: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+        { name: { $regex: query, $options: "i" } },
+      ],
+    });
+    if (customers.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No customers found with that phone number." });
+    }
 
-//     // Step 2: If no customers are found, return an error message
-//     if (customers.length === 0) {
-//       return res.status(404).json({ message: 'No customers found with that phone number.' });
-//     }
+    const customerIds = customers.map((customer) => customer._id);
 
-//     // Step 3: Extract the customer IDs from the result and convert to ObjectId format
-//     const customerIds = customers.map(customer => mongoose.Types.ObjectId(customer._id));
+    const activations = await SaleActivation.find({
+      customer: { $in: customerIds },
+    })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate("sale")
+      .populate("customer")
+      .populate("assignedEmployee")
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          model: "User",
+          select: "name email",
+        },
+      })
 
-//     // Step 4: Query the Activation model to get activations associated with these customers
-//     const activations = await SaleActivation.find({
-//       customer: { $in: customerIds }
-//     })
-//       .skip((page - 1) * limit) // Apply pagination: (page - 1) * limit
-//       .limit(parseInt(limit)) // Limit the number of results per page
-//       .populate('sale') // Populate the Sale reference (optional, if needed)
-//       .populate('assignedEmployee') // Populate the assignedEmployee reference (optional, if needed)
-//       .exec();
-
-//     // Step 5: Return the matching activations
-//     return res.json(activations);
-//   } catch (error) {
-//     console.error('Error fetching activations by phone number:', error);
-//     return res.status(500).json({ message: 'Server error' });
-//   }
-// };
+    // return res.json(activations);
+    return res.status(200).json({
+      success: true,
+      message: "Activation retrieved successfully",
+      data: activations,
+    });
+  } catch (error) {
+    console.error("Error fetching activations by phone number:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 module.exports = {
   createActivation,
   getAllActivations,
   getTeamActivations,
   getTeamStatusFilterActivations,
-  // searchActivationsByPhone,
+  searchActivations,
   oldSaleUpdate,
   getAllSupportActivation,
   addMonthInActivation,

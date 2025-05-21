@@ -3,17 +3,20 @@ const Sales = require("../models/Sales");
 
 const createCustomer = async (req, res) => {
   try {
-    const { name, email, phone, address, purchasedService, createdBy } = req.body;
-    const isExist = await Customer.findOne({ email: email })
+    const { name, email, phone, address, purchasedService, createdBy } =
+      req.body;
+    const isExist = await Customer.findOne({ email: email });
     if (isExist) {
       return res.status(400).json({
         success: false,
-        message: 'Customer Already Exist'
-      })
+        message: "Customer Already Exist",
+      });
     }
-    let refferCode = `${name.length <= 3 ?
-      name.slice(0, 3) + phone.slice(5, 10) :
-      name.slice(0, 4) + phone.slice(6, 10)}`.toUpperCase();
+    let refferCode = `${
+      name.length <= 3
+        ? name.slice(0, 3) + phone.slice(5, 10)
+        : name.slice(0, 4) + phone.slice(6, 10)
+    }`.toUpperCase();
 
     const newCustomer = new Customer({
       name,
@@ -41,17 +44,27 @@ const createCustomer = async (req, res) => {
 };
 const createRefferedCustomer = async (req, res) => {
   try {
-    const { name, email, phone, address, purchasedService, refferedBy, createdBy } = req.body;
-    const isExist = await Customer.findOne({ email: email })
+    const {
+      name,
+      email,
+      phone,
+      address,
+      purchasedService,
+      refferedBy,
+      createdBy,
+    } = req.body;
+    const isExist = await Customer.findOne({ email: email });
     if (isExist) {
       return res.status(400).json({
         success: false,
-        message: 'Customer Already Exist'
-      })
+        message: "Customer Already Exist",
+      });
     }
-    let refferCode = `${name.length <= 3 ?
-      name.slice(0, 3) + phone.slice(5, 10) :
-      name.slice(0, 4) + phone.slice(6, 10)}`.toUpperCase();
+    let refferCode = `${
+      name.length <= 3
+        ? name.slice(0, 3) + phone.slice(5, 10)
+        : name.slice(0, 4) + phone.slice(6, 10)
+    }`.toUpperCase();
 
     const newCustomer = new Customer({
       name,
@@ -167,8 +180,10 @@ const getEmpCustomerNotSale = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Step 1: Get all customer IDs from sales assigned to this employee
-    const sales = await Sales.find({ assignedEmployee: employee_ID }).select('customer');
-    const soldCustomerIds = sales.map(sale => sale.customer.toString());
+    const sales = await Sales.find({ assignedEmployee: employee_ID }).select(
+      "customer"
+    );
+    const soldCustomerIds = sales.map((sale) => sale.customer.toString());
 
     // Step 2: Query customers created by employee but not in soldCustomerIds
     const total = await Customer.countDocuments({
@@ -220,6 +235,37 @@ const getEmpCustomerNotSale = async (req, res) => {
   }
 };
 
+const searchCustomer = async (req, res) => {
+  try {
+    const empId = req.query.empId;
+    const query = req.query.query;
+
+    const customers = await Customer.find({
+      $and: [
+        { createdBy: empId },
+        {
+          $or: [
+            { phone: { $regex: query, $options: "i" } },
+            { email: { $regex: query, $options: "i" } },
+            { name: { $regex: query, $options: "i" } },
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Customer Received Successfully....',
+      data: customers
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 const updateCustomer = async (req, res) => {
   try {
@@ -266,6 +312,7 @@ module.exports = {
   createRefferedCustomer,
   getEmpCustomerNotSale,
   getCustomer,
+  searchCustomer,
   getEmpCustomer,
   updateCustomer,
   deleteCustomer,

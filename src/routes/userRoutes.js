@@ -1,10 +1,10 @@
 const express = require("express");
-const {createUser,getUser,getAllUser,deleteUser,updateUser,
+const {createUser,getUser,getAllUser,deleteUser,updateUser, searchUser,
 } = require("../controllers/userController");
 const {createService,getService, updateService,
 } = require("../controllers/serviceController");
 const { login } = require("../controllers/authController");
-const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale,
+const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale, searchCustomer,
 } = require("../controllers/customerController");
 const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange,
 } = require("../controllers/saleController");
@@ -19,7 +19,7 @@ const {getAllTrials,getTrialsByEmployeeId,updateTrial,createTrial,deleteTrial,ge
 const {getMessage,createMessage,
 } = require("../controllers/messageController");
 const { createTeam, getAllTeams } = require("../controllers/teamController");
-const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, searchActivationsByPhone, oldSaleUpdate,
+const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, oldSaleUpdate, searchActivations,
 } = require("../controllers/activationController");
 const {getPersonalMessage,
 } = require("../controllers/personalMessageController");
@@ -39,6 +39,7 @@ router.get("/service", getService);
 router.put("/service/:id", updateService);
 router.get("/users", getAllUser);
 router.get("/user/:id", getUser);
+router.get("/user/search/:id", searchUser);
 router.put("/user/:id", updateUser);
 router.post("/register", createUser);
 router.post("/service", createService);
@@ -48,7 +49,6 @@ router.delete("/user/:id", deleteUser);
 // Attendence Routes
 router.post("/attendance", createAttendence);
 
-
 // Customer Routes
 router.get("/customer", getCustomer);
 router.get("/customer/employee/:id", getEmpCustomer);
@@ -57,6 +57,8 @@ router.put("/customer/:id", updateCustomer);
 router.post("/customer", createCustomer);
 router.post("/reffers-customer", createRefferedCustomer);
 router.delete("/customer/:id", deleteCustomer);
+router.get("/customer/search", searchCustomer)
+
 
 // Callback Routes
 router.get("/callback/employee/:id", getEmpCallback);
@@ -102,13 +104,13 @@ router.post("/activations", createActivation);
 router.get("/activations", getAllActivations);
 router.get("/activations/team/:id", getTeamActivations);
 router.get("/activations/team-status/:id", getTeamStatusFilterActivations);
+router.get("/activations/search", searchActivations);
 router.get("/activations/:id", getActivationById);
 router.get("/activations/support/:id", getAllSupportActivation);
 router.put("/activations/:id", updateActivation);
 router.put("/activations/addMonth/:id", addMonthInActivation);
 router.put("/activations/oldsale/:id", oldSaleUpdate);
 router.delete("/activations/:id", deleteActivation);
-// router.get("/activations/search", searchActivationsByPhone);
 
 // Trial Activation Routes
 router.post("/trialActivations", createTrialActivation);
