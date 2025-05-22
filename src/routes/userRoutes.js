@@ -31,7 +31,8 @@ const {createTrialActivation,getAllTrialActivations,getTrialActivationById,updat
 const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses,
 } = require("../controllers/macAddressController");
 const { getActivationDashboard, getSaleDashboard } = require("../controllers/dashboard");
-const {createAttendence} = require("../controllers/attendanceController")
+const {createAttendence} = require("../controllers/attendanceController");
+const {getExecutiveStats} = require("../controllers/adminController");
 
 
 // User Routes
@@ -146,6 +147,9 @@ router.delete("/macAddress/:id", deleteMacAddress);
 // Dashboard Data 
 router.get("/activationDashboard", getActivationDashboard);
 router.get("/saleDashboard/:id", getSaleDashboard);
+
+// Admin Data 
+router.get("/admin/employee-data/:id", getExecutiveStats)
 
 
 module.exports = router;
