@@ -23,7 +23,7 @@ const getExecutiveStats = async (req, res) => {
 
     // 1. All Sales
     const allSales = await Sales.find({ assignedEmployee: executiveId })
-      .populate('customer service')
+      .populate('customer service assignedEmployee')
       .sort({ createdAt: -1 });
 
     const totalRevenue = allSales.reduce((acc, sale) => acc + (sale.totalAmount || 0), 0);
@@ -38,11 +38,12 @@ const getExecutiveStats = async (req, res) => {
 
     // 4. Callbacks
     const callbacks = await Callback.find({ createdBy: executiveId })
+      .populate('createdBy')
       .sort({ createdAt: -1 });
 
     // 5. Trials
     const trials = await Trial.find({ assignedEmployee: executiveId })
-      .populate('service')
+      .populate('service assignedEmployee')
       .sort({ createdAt: -1 });
 
     res.json({
