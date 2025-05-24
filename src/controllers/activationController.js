@@ -679,6 +679,39 @@ const updateActivation = async (req, res) => {
   }
 };
 
+const renewActivation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const renewalDate = new Date();
+    const newExpirationDate = new Date();
+    newExpirationDate.setMonth(renewalDate.getMonth() + 1);
+
+    const updatedActivation = await Activation.findByIdAndUpdate(
+      id,
+      {
+        currentMonth: 1,
+        expirationDate: newExpirationDate,
+        status: "active",
+        updatedAt: renewalDate,
+      },
+      { new: true }
+    ).populate("assignedEmployee customer sale");
+
+    if (!updatedActivation) {
+      return res.status(404).json({ message: "Activation not found" });
+    }
+
+    return res.status(200).json({
+      message: "Activation renewed successfully",
+      activation: updatedActivation,
+    });
+  } catch (error) {
+    console.error("Error renewing activation:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const addMonthInActivation = async (req, res) => {
   try {
     const id = req.params.id;
@@ -884,7 +917,7 @@ const searchActivations = async (req, res) => {
   try {
     const page = req.query.page || 1;
     const query = req.query.query;
-    const limit = 10
+    const limit = 10;
     // const { number } = req.params.id;
 
     const customers = await Customer.find({
@@ -917,7 +950,7 @@ const searchActivations = async (req, res) => {
           model: "User",
           select: "name email",
         },
-      })
+      });
 
     // return res.json(activations);
     return res.status(200).json({
@@ -940,6 +973,7 @@ module.exports = {
   oldSaleUpdate,
   getAllSupportActivation,
   addMonthInActivation,
+  renewActivation,
   getActivationById,
   updateActivation,
   deleteActivation,

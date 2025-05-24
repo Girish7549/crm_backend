@@ -6,7 +6,7 @@ const {createService,getService, updateService,
 const { login } = require("../controllers/authController");
 const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale, searchCustomer,
 } = require("../controllers/customerController");
-const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange,
+const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone,
 } = require("../controllers/saleController");
 const {createFollowUp,getAllFollowUps,getFollowUpById,deleteFollowUp,updateFollowUp,
 } = require("../controllers/followupController");
@@ -94,6 +94,7 @@ router.put("/sale/:id",upload.fields([{ name: "paymentProof", maxCount: 5 },{ na
 router.post('/sale',upload.fields([{ name: 'paymentProof', maxCount: 5 },{ name: 'voiceProof', maxCount: 1 },]),createSale);
 router.delete("/sale/:id", deleteSale);
 router.get("/sales/search", searchSalesByPhone)
+router.get("/sales/search-all-sale", searchAllSalesByPhone)
 // router.post("/sale", upload.single("paymentProof"), createSale);
 // router.put("/sale/:id", upload.array("paymentProof", 5), updateSale); // 5 image ki limit lagai hai bss
 // For multiple fields (PUT request for update)

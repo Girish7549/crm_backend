@@ -351,6 +351,7 @@ const getSalesByEmployeeAndDateRange1 = async (req, res) => {
   }
 };
 
+
 const getSalesByEmployeeAndDateRange = async (req, res) => {
   try {
     const { dateRange } = req.body;
@@ -406,7 +407,6 @@ const getSalesByEmployeeAndDateRange = async (req, res) => {
   }
 };
 
-module.exports = getSalesByEmployeeAndDateRange;
 
 const getSalesByTeam = async (req, res) => {
   try {
@@ -1014,6 +1014,114 @@ const searchSalesByPhone = async (req, res) => {
   }
 };
 
+const searchAllSalesByPhone = async (req, res) => {
+  try {
+    const number = req.query.number?.trim();
+    const page = parseInt(req.query.page) || 1;
+    // const emp = req.query.emp || '';
+    // console.log("***************** ", emp, "*******************")
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    if (!number) {
+      return res.status(400).json({
+        success: false,
+        message: "Search number is required",
+      });
+    }
+
+    const pipeline = [
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: {
+          path: "$customer",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { "customer.phone": { $regex: number, $options: "i" } },
+            { "customer.name": { $regex: number, $options: "i" } },
+            { "customer.email": { $regex: number, $options: "i" } },
+          ],
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "assignedEmployee",
+          foreignField: "_id",
+          as: "assignedEmployee",
+        },
+      },
+      {
+        $unwind: {
+          path: "$assignedEmployee",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "teams",
+          localField: "assignedEmployee.team",
+          foreignField: "_id",
+          as: "assignedEmployee.team",
+        },
+      },
+      {
+        $unwind: {
+          path: "$assignedEmployee.team",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $facet: {
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
+
+    const result = await Sales.aggregate(pipeline);
+    const sales = result[0]?.data
+    // console.log("Sale Filter:", sales)
+    // console.log("Sale :", result[0].data)
+
+    const total = sales.length;
+
+    return res.status(200).json({
+      success: true,
+      message: "Sales matched by phone number",
+      data: sales,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error searching sales by phone:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createSale,
   getAllSale,
@@ -1022,6 +1130,7 @@ module.exports = {
   getUnactivatedSalesByTeam,
   getSalesByEmployeeAndDateRange,
   searchSalesByPhone,
+  searchAllSalesByPhone,
   updateSale,
   deleteSale,
   getSalesByTeam,
