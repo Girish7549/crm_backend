@@ -338,9 +338,18 @@ const createActivation = async (req, res) => {
     const emp = await User.findById(assignedEmployee);
     const io = req.app.get("io");
 
+    const support = await User.findById(assignedEmployee).populate("name email role team");
+
+    const employee = await User.findById(sale.assignedEmployee).populate("name email role team");
+    
+    console.log("Sale Executive :", employee.name);
+    console.log("Support :", support.name);
+
     io.emit("new-activation", {
       message: "A new activation has been created!",
       teamId: emp.team,
+      assignedEmployee: employee,
+      support,
       activationId: activation._id,
     });
 

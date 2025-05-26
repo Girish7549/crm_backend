@@ -9,6 +9,7 @@ const { Server } = require("socket.io");
 const Message = require("./models/Message");
 const PersonalMessage = require("./models/PersonalMessage");
 const Sales = require("./models/Sales");
+const SaleActivation = require("./models/SaleActivation");
 require("dotenv").config();
 
 const app = express();
@@ -99,13 +100,34 @@ io.on("connection", (socket) => {
   // });
 
   // Activation create alert
-  socket.on("createActivation", (data) => {
+  socket.on("createActivation", async (data) => {
     const { assignedEmployee, activationId } = data;
+    const support = await SaleActivation.findById(activationId).populate({
+      path: "assignedEmployee",
+      select: "name email role team",
+      populate: {
+        path: "team",
+        select: "name",
+      },
+    });
+    const employee = await User.findById(
+      support.sale.assignedEmployee
+    ).populate({
+      path: "assignedEmployee",
+      select: "name email role team",
+      populate: {
+        path: "team",
+        select: "name",
+      },
+    });
+    console.log("Sale Executive :", employee.name)
+    console.log("Support :", support.name)
 
     io.emit("new-activation", {
-      message: "A new activation has been created!",
+      message: "A new activation has been created!!!",
       activationId,
-      assignedEmployee,
+      support: support,
+      assignedEmployee: employee,
     });
   });
 

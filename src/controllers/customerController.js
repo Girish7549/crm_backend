@@ -5,11 +5,12 @@ const createCustomer = async (req, res) => {
   try {
     const { name, email, phone, address, purchasedService, createdBy } =
       req.body;
-    const isExist = await Customer.findOne({ email: email });
+    const isExist = await Customer.findOne({ email: email }).populate("createdBy");
     if (isExist) {
       return res.status(400).json({
         success: false,
         message: "Customer Already Exist",
+        data: isExist
       });
     }
     let refferCode = `${
