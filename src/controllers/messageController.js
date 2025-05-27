@@ -36,5 +36,22 @@ const createMessage = async (req, res) => {
   }
 };
 
-module.exports = {getMessage, createMessage}
+const deleteMessage = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const deletedMessage = await Message.findByIdAndDelete(id);
 
+    res.status(200).json({
+      success: true,
+      message: "Delete Message Successfully....",
+      data: deletedMessage,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = { getMessage, createMessage, deleteMessage };

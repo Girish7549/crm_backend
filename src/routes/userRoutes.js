@@ -16,7 +16,7 @@ const {createNotification,getNotificationsByEmployee,deleteNotification,
 } = require("../controllers/notificationController");
 const {getAllTrials,getTrialsByEmployeeId,updateTrial,createTrial,deleteTrial,getTrialByTeam,
 } = require("../controllers/trialController");
-const {getMessage,createMessage,
+const {getMessage,createMessage,deleteMessage
 } = require("../controllers/messageController");
 const { createTeam, getAllTeams } = require("../controllers/teamController");
 const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, oldSaleUpdate, searchActivations,
@@ -133,6 +133,7 @@ router.delete("/followUps/:id", deleteFollowUp);
 // Message Group Chat
 router.get("/chats", getMessage);
 router.post("/chat", createMessage);
+router.delete("/chat/:id", deleteMessage);
 
 // Personal Chat
 router.get("/dm", getPersonalMessage);
