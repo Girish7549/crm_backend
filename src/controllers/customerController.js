@@ -11,14 +11,16 @@ const createCustomer = async (req, res) => {
     if (isExist) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist",
+        message: "Customer Already Exist11111",
         data: isExist
       });
     }
-    if (isExistInFollowUps) {
+    console.log("CREATED BY :", createdBy)
+    console.log("Follow ups saleperson BY :", isExistInFollowUps.salesPerson._id.toString())
+    if (isExistInFollowUps && createdBy !== isExistInFollowUps.salesPerson._id.toString()) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist",
+        message: "Customer Already Exist22222",
         data: isExistInFollowUps
       });
     }
