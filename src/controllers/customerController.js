@@ -1,11 +1,13 @@
 const Customer = require("../models/Customer");
 const Sales = require("../models/Sales");
+const FollowUp = require("../models/FollowUp");
 
 const createCustomer = async (req, res) => {
   try {
     const { name, email, phone, address, purchasedService, createdBy } =
       req.body;
     const isExist = await Customer.findOne({ email: email }).populate("createdBy");
+    const isExistInFollowUps = await FollowUp.findOne({ email: email, phone: phone }).populate("salesPerson");
     if (isExist) {
       return res.status(400).json({
         success: false,
@@ -13,6 +15,14 @@ const createCustomer = async (req, res) => {
         data: isExist
       });
     }
+    if (isExistInFollowUps) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer Already Exist",
+        data: isExistInFollowUps
+      });
+    }
+
     let refferCode = `${
       name.length <= 3
         ? name.slice(0, 3) + phone.slice(5, 10)

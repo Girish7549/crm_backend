@@ -4,13 +4,13 @@ const createFollowUp = async (req, res) => {
   try {
     const { email, salesPerson } = req.body;
 
-    const existingFollowUp = await FollowUp.findOne({ email });
+    const existingFollowUp = await FollowUp.findOne({ email }).populate('salesPerson');
 
     if (existingFollowUp) {
       if (existingFollowUp.salesPerson) {
         return res.status(400).json({
           success: false,
-          message: "Follow-up already created and assigned to a salesperson.",
+          message: `Follow-up already created and assigned to ${existingFollowUp.salesPerson.name}.`,
           data: existingFollowUp,
         });
       } else {
