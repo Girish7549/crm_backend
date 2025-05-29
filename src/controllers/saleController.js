@@ -265,7 +265,7 @@ const getSaleByEmp = async (req, res) => {
     const services = await Sales.find({ assignedEmployee: empId })
       .populate({
         path: "customer",
-        select: "_id name email phone address team",
+        select: "_id name email phone whatsapp address team",
       })
       .sort({ createdAt: -1 })
       .skip(skip)

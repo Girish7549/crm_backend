@@ -4,7 +4,7 @@ const FollowUp = require("../models/FollowUp");
 
 const createCustomer = async (req, res) => {
   try {
-    const { name, email, phone, address, purchasedService, createdBy } =
+    const { name, email, phone, whatsapp, address, purchasedService, createdBy } =
       req.body;
     const isExist = await Customer.findOne({ email: email }).populate("createdBy");
     const isExistInFollowUps = await FollowUp.findOne({ email: email, phone: phone }).populate("salesPerson");
@@ -16,8 +16,8 @@ const createCustomer = async (req, res) => {
       });
     }
     console.log("CREATED BY :", createdBy)
-    console.log("Follow ups saleperson BY :", isExistInFollowUps.salesPerson._id.toString())
-    if (isExistInFollowUps && createdBy !== isExistInFollowUps.salesPerson._id.toString()) {
+    console.log("Follow ups saleperson BY :", isExistInFollowUps?.salesPerson._id?.toString())
+    if (isExistInFollowUps && createdBy !== isExistInFollowUps?.salesPerson._id?.toString()) {
       return res.status(400).json({
         success: false,
         message: "Customer Already Exist22222",
@@ -35,6 +35,7 @@ const createCustomer = async (req, res) => {
       name,
       email,
       phone,
+      whatsapp,
       address,
       refferCode,
       purchasedService,
@@ -61,6 +62,7 @@ const createRefferedCustomer = async (req, res) => {
       name,
       email,
       phone,
+      whatsapp,
       address,
       purchasedService,
       refferedBy,
@@ -83,6 +85,7 @@ const createRefferedCustomer = async (req, res) => {
       name,
       email,
       phone,
+      whatsapp,
       address,
       refferCode,
       refferedBy,
