@@ -372,7 +372,7 @@ const getAllActivations = async (req, res) => {
 
     const total = await SaleActivation.countDocuments();
     const activations = await SaleActivation.find()
-      .populate("sale")
+      // .populate("sale")
       .populate("customer")
       .populate("assignedEmployee")
       .populate({
@@ -380,6 +380,13 @@ const getAllActivations = async (req, res) => {
         populate: {
           path: "employee",
           model: "User",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
           select: "name email",
         },
       })
