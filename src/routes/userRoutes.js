@@ -28,7 +28,7 @@ const router = express.Router();
 const upload = require("../config/multer");
 const {createTrialActivation,getAllTrialActivations,getTrialActivationById,updateTrialActivation,deleteTrialActivation,getAllSupportTrialActivation,getTeamTrialActivation,
 } = require("../controllers/trialActivationController");
-const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses,
+const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses, emptyMacAddress,
 } = require("../controllers/macAddressController");
 const { getActivationDashboard, getSaleDashboard } = require("../controllers/dashboard");
 const {createAttendence} = require("../controllers/attendanceController");
@@ -142,6 +142,7 @@ router.get("/dm", getPersonalMessage);
 router.post("/macAddress", createMacAddress);
 router.get("/macAddress", getAllMacAddresses);
 router.get("/check-mac", checkMacExists);
+router.get("/empty-macAddress", emptyMacAddress);
 router.get("/macAddress/:id", getMacAddressById);
 router.put("/macAddress/:id", updateMacAddress);
 router.delete("/macAddress/:id", deleteMacAddress);

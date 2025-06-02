@@ -52,7 +52,7 @@ const getAllMacAddresses = async (req, res) => {
 const checkMacExists = async (req, res) => {
   try {
     const { macAddress } = req.query;
-    console.log("MacAddress: ", macAddress)
+    console.log("MacAddress: ", macAddress);
     const existing = await MacAddress.findOne({ macAddress: macAddress });
 
     if (existing) {
@@ -148,10 +148,58 @@ const deleteMacAddress = async (req, res) => {
   }
 };
 
+const emptyMacAddress = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    // const total = await SaleActivation.countDocuments();
+
+    const emptyMacAddress = await SaleActivation.find({ macAddress: null })
+      .populate("customer")
+      .populate("assignedEmployee")
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          model: "User",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
+          select: "name email",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const total = emptyMacAddress.length;
+
+    res.status(200).json({
+      success: true,
+      message: "All Empty Mac Address Received...",
+      data: emptyMacAddress,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error Find Empty MAC address:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createMacAddress,
   getAllMacAddresses,
   checkMacExists,
+  emptyMacAddress,
   getMacAddressById,
   updateMacAddress,
   deleteMacAddress,
