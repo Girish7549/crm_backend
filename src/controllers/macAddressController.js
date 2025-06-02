@@ -1,4 +1,5 @@
 const MacAddress = require("../models/MacAddress");
+const SaleActivation = require("../models/SaleActivation");
 
 // Create new MAC Address
 const createMacAddress = async (req, res) => {
