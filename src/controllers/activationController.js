@@ -956,7 +956,12 @@ const searchActivations = async (req, res) => {
     })
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .populate("sale")
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee"
+        }
+      })
       .populate("customer")
       .populate("assignedEmployee")
       .populate({
