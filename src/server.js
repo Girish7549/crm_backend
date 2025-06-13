@@ -10,6 +10,7 @@ const Message = require("./models/Message");
 const PersonalMessage = require("./models/PersonalMessage");
 const Sales = require("./models/Sales");
 const SaleActivation = require("./models/SaleActivation");
+const Customer = require("./models/Customer");
 require("dotenv").config();
 
 const app = express();
@@ -110,6 +111,7 @@ io.on("connection", (socket) => {
         select: "name",
       },
     });
+    clg
     const employee = await User.findById(
       support.sale.assignedEmployee
     ).populate({
@@ -120,6 +122,7 @@ io.on("connection", (socket) => {
         select: "name",
       },
     });
+    const customer = await Customer.findById(support.customer).populate("name email phone")
     console.log("Sale Executive :", employee.name)
     console.log("Support :", support.name)
 
@@ -128,6 +131,7 @@ io.on("connection", (socket) => {
       activationId,
       support: support,
       assignedEmployee: employee,
+      customer: customer
     });
   });
 
