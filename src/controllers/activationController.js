@@ -342,7 +342,7 @@ const createActivation = async (req, res) => {
 
     const employee = await User.findById(sale.assignedEmployee).populate("name email role team");
 
-    const customerInfo = await Customer.findById(support.customer).populate("name email phone")
+    const customerInfo = await Customer.findById(customer).populate("name email phone")
 
     
     console.log("Sale Executive :", employee.name);
