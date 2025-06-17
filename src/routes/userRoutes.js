@@ -1,7 +1,7 @@
 const express = require("express");
 const {createUser,getUser,getAllUser,deleteUser,updateUser, searchUser,
 } = require("../controllers/userController");
-const {createService,getService, updateService,
+const {createService,getService, updateService, deleteService,
 } = require("../controllers/serviceController");
 const { login } = require("../controllers/authController");
 const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale, searchCustomer,
@@ -30,20 +30,22 @@ const {createTrialActivation,getAllTrialActivations,getTrialActivationById,updat
 } = require("../controllers/trialActivationController");
 const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses, emptyMacAddress,
 } = require("../controllers/macAddressController");
-const { getActivationDashboard, getSaleDashboard } = require("../controllers/dashboard");
+const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
 const {createAttendence} = require("../controllers/attendanceController");
 const {getExecutiveStats} = require("../controllers/adminController");
 
-
-// User Routes
+// Service Routes
+router.post("/service", createService);
 router.get("/service", getService);
 router.put("/service/:id", updateService);
+router.delete("/service/:id", deleteService);
+
+// User Routes
 router.get("/users", getAllUser);
 router.get("/user/:id", getUser);
 router.get("/user/search/:id", searchUser);
 router.put("/user/:id", updateUser);
 router.post("/register", createUser);
-router.post("/service", createService);
 router.post("/login", login);
 router.delete("/user/:id", deleteUser);
 
@@ -150,6 +152,7 @@ router.delete("/macAddress/:id", deleteMacAddress);
 // Dashboard Data 
 router.get("/activationDashboard", getActivationDashboard);
 router.get("/saleDashboard/:id", getSaleDashboard);
+router.get("/adminDashboard", getAdminDashboard);
 
 // Admin Data 
 router.get("/admin/employee-data/:id", getExecutiveStats)

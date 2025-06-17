@@ -71,6 +71,25 @@ const updateService = async (req, res) => {
     }
 };
 
+const deleteService = async (req, res) => {
+    try{
+        const id = req.params.id
+        const deleteService = await Service.findByIdAndDelete(id)
+
+        res.status(200).json({
+            success: true,
+            message: 'Service delete successfully...',
+            data: deleteService
+        })
+    }catch(err){
+        console.log('Error!', err)
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error'
+        })
+    }
+}
 
 
-module.exports = {createService, getService, updateService}
+
+module.exports = {createService, getService, updateService, deleteService}
