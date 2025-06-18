@@ -31,7 +31,7 @@ const {createTrialActivation,getAllTrialActivations,getTrialActivationById,updat
 const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses, emptyMacAddress,
 } = require("../controllers/macAddressController");
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
-const {createAttendence} = require("../controllers/attendanceController");
+const {createAttendence, getAllAttendence, deleteAttandence} = require("../controllers/attendanceController");
 const {getExecutiveStats} = require("../controllers/adminController");
 
 // Service Routes
@@ -51,6 +51,8 @@ router.delete("/user/:id", deleteUser);
 
 // Attendence Routes
 router.post("/attendance", createAttendence);
+router.get("/attendance", getAllAttendence);
+router.delete("/attendance", deleteAttandence);
 
 // Customer Routes
 router.get("/customer", getCustomer);

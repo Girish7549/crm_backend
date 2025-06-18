@@ -297,7 +297,6 @@ const getAdminDashboard = async (req, res) => {
       })
     );
 
-    // ✅ Final Response
     res.status(200).json({
       success: true,
       dashboardData,
