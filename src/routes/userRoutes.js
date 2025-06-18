@@ -52,7 +52,7 @@ router.delete("/user/:id", deleteUser);
 // Attendence Routes
 router.post("/attendance", createAttendence);
 router.get("/attendance", getAllAttendence);
-router.delete("/attendance", deleteAttandence);
+router.delete("/attendance/:id", deleteAttandence);
 
 // Customer Routes
 router.get("/customer", getCustomer);
