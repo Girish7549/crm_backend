@@ -1,38 +1,42 @@
 const express = require("express");
-const {createUser,getUser,getAllUser,deleteUser,updateUser, searchUser,
-} = require("../controllers/userController");
-const {createService,getService, updateService, deleteService,
-} = require("../controllers/serviceController");
+
+const { createUser, getUser, getAllUser, deleteUser, updateUser, searchUser } = require("../controllers/userController");
+
+const { createService, getService, updateService, deleteService } = require("../controllers/serviceController");
+
 const { login } = require("../controllers/authController");
-const {createCustomer,getCustomer,updateCustomer,deleteCustomer,getEmpCustomer,createRefferedCustomer, getEmpCustomerNotSale, searchCustomer,
-} = require("../controllers/customerController");
-const {createSale,getAllSale,getSaleByEmp,updateSale,deleteSale,getSalesByTeam,getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone,
-} = require("../controllers/saleController");
-const {createFollowUp,getAllFollowUps,getFollowUpById,deleteFollowUp,updateFollowUp,
-} = require("../controllers/followupController");
-const {createCallback,getEmpCallback,updateCallback,
-} = require("../controllers/callbackController");
-const {createNotification,getNotificationsByEmployee,deleteNotification,
-} = require("../controllers/notificationController");
-const {getAllTrials,getTrialsByEmployeeId,updateTrial,createTrial,deleteTrial,getTrialByTeam,
-} = require("../controllers/trialController");
-const {getMessage,createMessage,deleteMessage
-} = require("../controllers/messageController");
+
+const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer } = require("../controllers/customerController");
+
+const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone } = require("../controllers/saleController");
+
+const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp } = require("../controllers/followupController");
+
+const { createCallback, getEmpCallback, updateCallback } = require("../controllers/callbackController");
+
+const { createNotification, getNotificationsByEmployee, deleteNotification } = require("../controllers/notificationController");
+
+const { getAllTrials, getTrialsByEmployeeId, updateTrial, createTrial, deleteTrial, getTrialByTeam } = require("../controllers/trialController");
+
+const { getMessage, createMessage, deleteMessage } = require("../controllers/messageController");
+
 const { createTeam, getAllTeams } = require("../controllers/teamController");
-const {createActivation,getAllActivations,getActivationById,updateActivation,deleteActivation,getAllSupportActivation,getTeamActivations,addMonthInActivation,getTeamStatusFilterActivations, oldSaleUpdate, searchActivations,
-} = require("../controllers/activationController");
-const {getPersonalMessage,
-} = require("../controllers/personalMessageController");
+
+const { createActivation, getAllActivations, getActivationById, updateActivation, deleteActivation, getAllSupportActivation, getTeamActivations, addMonthInActivation, getTeamStatusFilterActivations, oldSaleUpdate, searchActivations } = require("../controllers/activationController");
+
+const { getPersonalMessage } = require("../controllers/personalMessageController");
 
 const router = express.Router();
 const upload = require("../config/multer");
-const {createTrialActivation,getAllTrialActivations,getTrialActivationById,updateTrialActivation,deleteTrialActivation,getAllSupportTrialActivation,getTeamTrialActivation,
-} = require("../controllers/trialActivationController");
-const {createMacAddress,deleteMacAddress,updateMacAddress,getMacAddressById,checkMacExists,getAllMacAddresses, emptyMacAddress,
-} = require("../controllers/macAddressController");
+
+const { createTrialActivation, getAllTrialActivations, getTrialActivationById, updateTrialActivation, deleteTrialActivation, getAllSupportTrialActivation, getTeamTrialActivation } = require("../controllers/trialActivationController");
+
+const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById, checkMacExists, getAllMacAddresses, emptyMacAddress } = require("../controllers/macAddressController");
+
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
-const {createAttendence, getAllAttendence, deleteAttandence} = require("../controllers/attendanceController");
-const {getExecutiveStats} = require("../controllers/adminController");
+const { createAttendence, getAllAttendence, deleteAttandence } = require("../controllers/attendanceController");
+const { getExecutiveStats } = require("../controllers/adminController");
+const { createPayment, getPayments, getPaymentById } = require("../controllers/paymentController");
 
 // Service Routes
 router.post("/service", createService);
@@ -62,8 +66,7 @@ router.put("/customer/:id", updateCustomer);
 router.post("/customer", createCustomer);
 router.post("/reffers-customer", createRefferedCustomer);
 router.delete("/customer/:id", deleteCustomer);
-router.get("/customer/search", searchCustomer)
-
+router.get("/customer/search", searchCustomer);
 
 // Callback Routes
 router.get("/callback/employee/:id", getEmpCallback);
@@ -94,11 +97,25 @@ router.get("/sales/employee/:id", getSaleByEmp);
 router.post("/sales/employee-date-range/:id", getSalesByEmployeeAndDateRange);
 router.get("/sales/team-pending/:id", getTeamPendingSale);
 router.get("/sales/not-activate/:id", getUnactivatedSalesByTeam);
-router.put("/sale/:id",upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 },]), updateSale);
-router.post('/sale',upload.fields([{ name: 'paymentProof', maxCount: 5 },{ name: 'voiceProof', maxCount: 1 },]),createSale);
+router.put(
+  "/sale/:id",
+  upload.fields([
+    { name: "paymentProof", maxCount: 5 },
+    { name: "voiceProof", maxCount: 1 },
+  ]),
+  updateSale
+);
+router.post(
+  "/sale",
+  upload.fields([
+    { name: "paymentProof", maxCount: 5 },
+    { name: "voiceProof", maxCount: 1 },
+  ]),
+  createSale
+);
 router.delete("/sale/:id", deleteSale);
-router.get("/sales/search", searchSalesByPhone)
-router.get("/sales/search-all-sale", searchAllSalesByPhone)
+router.get("/sales/search", searchSalesByPhone);
+router.get("/sales/search-all-sale", searchAllSalesByPhone);
 // router.post("/sale", upload.single("paymentProof"), createSale);
 // router.put("/sale/:id", upload.array("paymentProof", 5), updateSale); // 5 image ki limit lagai hai bss
 // For multiple fields (PUT request for update)
@@ -151,13 +168,17 @@ router.get("/macAddress/:id", getMacAddressById);
 router.put("/macAddress/:id", updateMacAddress);
 router.delete("/macAddress/:id", deleteMacAddress);
 
-// Dashboard Data 
+// Dashboard Data
 router.get("/activationDashboard", getActivationDashboard);
 router.get("/saleDashboard/:id", getSaleDashboard);
 router.get("/adminDashboard", getAdminDashboard);
 
-// Admin Data 
-router.get("/admin/employee-data/:id", getExecutiveStats)
+// Admin Data
+router.get("/admin/employee-data/:id", getExecutiveStats);
 
+// Payment
+router.post("/payments", upload.fields([ { name: "paymentProof", maxCount: 2 } ]), createPayment );
+router.get("/payments", getPayments);
+router.get("/payments/:id", getPaymentById);
 
 module.exports = router;
