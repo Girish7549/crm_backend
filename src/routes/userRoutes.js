@@ -36,7 +36,7 @@ const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById,
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
 const { createAttendence, getAllAttendence, deleteAttandence } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
-const { createPayment, getPayments, getPaymentById } = require("../controllers/paymentController");
+const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 
 // Service Routes
 router.post("/service", createService);
@@ -180,5 +180,6 @@ router.get("/admin/employee-data/:id", getExecutiveStats);
 router.post("/payments", upload.fields([ { name: "paymentProof", maxCount: 2 } ]), createPayment );
 router.get("/payments", getPayments);
 router.get("/payments/:id", getPaymentById);
+router.delete("/payments/:id", deletePaymentById);
 
 module.exports = router;

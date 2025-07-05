@@ -85,6 +85,41 @@ const getPaymentById = async (req, res) => {
   }
 };
 
+const deletePaymentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Payment not found." });
+    }
+
+    // Optional: remove the proof image from Sale.paymentProof array
+    const customer = await Customer.findOne({ email: payment.email });
+    if (customer) {
+      const sale = await Sale.findOne({ customer: customer._id });
+      if (sale && sale.paymentProof.includes(payment.paymentProof)) {
+        sale.paymentProof = sale.paymentProof.filter(
+          (proof) => proof !== payment.paymentProof
+        );
+        await sale.save();
+      }
+    }
+
+    // Delete the payment record
+    await Payment.findByIdAndDelete(id);
+
+    res
+      .status(200)
+      .json({ success: true, message: "Payment deleted successfully." });
+  } catch (error) {
+    console.error("Delete Payment Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
 const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -104,4 +139,4 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
   });
 };
 
-module.exports = { createPayment, getPaymentById, getPayments };
+module.exports = { createPayment, getPaymentById, getPayments, deletePaymentById };
