@@ -12,7 +12,7 @@ const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesBy
 
 const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp } = require("../controllers/followupController");
 
-const { createCallback, getEmpCallback, updateCallback } = require("../controllers/callbackController");
+const { createCallback, getEmpCallback, updateCallback, getEmpTotalCallback } = require("../controllers/callbackController");
 
 const { createNotification, getNotificationsByEmployee, deleteNotification } = require("../controllers/notificationController");
 
@@ -70,6 +70,7 @@ router.get("/customer/search", searchCustomer);
 
 // Callback Routes
 router.get("/callback/employee/:id", getEmpCallback);
+router.get("/totalcallback/employee/:id", getEmpTotalCallback);
 router.put("/callback/:id", updateCallback);
 router.post("/callback", createCallback);
 

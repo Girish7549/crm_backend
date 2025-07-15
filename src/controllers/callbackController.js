@@ -42,6 +42,7 @@ const getEmpCallback = async (req, res) => {
     const total = await Callback.countDocuments({ createdBy: empId });
 
     const callback = await Callback.find({ createdBy: empId })
+      .sort({ createdAt: -1 })
       .populate("createdBy")
       .limit(limit)
       .skip(skip);
@@ -68,11 +69,41 @@ const getEmpCallback = async (req, res) => {
     });
   }
 };
+const getEmpTotalCallback = async (req, res) => {
+  try {
+    const empId = req.params.id;
+
+    const callback = await Callback.find({ createdBy: empId })
+      .sort({ createdAt: -1 })
+      .populate("createdBy");
+
+    console.log(empId);
+    console.log(callback);
+
+    res.status(200).json({
+      success: true,
+      message: "Employee Callback Retrived Successfully...",
+      data: callback,
+    });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+    });
+  }
+};
 
 const updateCallback = async (req, res) => {
   try {
     const callbackId = req.params.id;
-    const { notes, scheduledTime, notification: notificationId, status , phone} = req.body;
+    const {
+      notes,
+      scheduledTime,
+      notification: notificationId,
+      status,
+      phone,
+    } = req.body;
 
     const existingCallback = await Callback.findById(callbackId);
 
@@ -85,23 +116,32 @@ const updateCallback = async (req, res) => {
 
     const updateOps = {};
 
-    // time scheduling kr rha hu 
+    // time scheduling kr rha hu
     if (
       scheduledTime &&
-      new Date(scheduledTime).getTime() !== new Date(existingCallback.scheduledTime).getTime()
+      new Date(scheduledTime).getTime() !==
+        new Date(existingCallback.scheduledTime).getTime()
     ) {
-      updateOps.status = status === "notInterested" ? "notInterested" :  "rescheduled";
+      updateOps.status =
+        status === "notInterested" ? "notInterested" : "rescheduled";
       updateOps.scheduledTime = scheduledTime;
     }
 
     // note exist krta h to update kr do aur status ko resheduled kr do
     if (notes && notes.length > 0) {
-      await Callback.findByIdAndUpdate(callbackId, {
-        $push: { notes: { ...notes[0] } }, 
-        ...updateOps,
-      }, { new: true, runValidators: true });
+      await Callback.findByIdAndUpdate(
+        callbackId,
+        {
+          $push: { notes: { ...notes[0] } },
+          ...updateOps,
+        },
+        { new: true, runValidators: true }
+      );
     } else {
-      await Callback.findByIdAndUpdate(callbackId, updateOps, phone, { new: true, runValidators: true });
+      await Callback.findByIdAndUpdate(callbackId, updateOps, phone, {
+        new: true,
+        runValidators: true,
+      });
     }
 
     // notification ko delete kr do
@@ -109,7 +149,7 @@ const updateCallback = async (req, res) => {
       await Notification.findByIdAndDelete(notificationId);
     }
 
-    const updatedCallback = await Callback.findById(callbackId); 
+    const updatedCallback = await Callback.findById(callbackId);
 
     res.status(200).json({
       success: true,
@@ -125,5 +165,9 @@ const updateCallback = async (req, res) => {
   }
 };
 
-
-module.exports = { createCallback, getEmpCallback, updateCallback };
+module.exports = {
+  createCallback,
+  getEmpCallback,
+  updateCallback,
+  getEmpTotalCallback,
+};
