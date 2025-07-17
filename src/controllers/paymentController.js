@@ -6,7 +6,7 @@ const Customer = require("../models/Customer"); // assuming this exists
 
 const createPayment = async (req, res) => {
   try {
-    const { name, email, paymentId } = req.body;
+    const { name, email, phone, paymentId } = req.body;
 
     if (!req.files?.paymentProof?.length) {
       return res.status(400).json({ error: "paymentProof image is required." });
@@ -45,6 +45,7 @@ const createPayment = async (req, res) => {
     const payment = new Payment({
       name,
       email,
+      phone,
       paymentId,
       paymentProof: uploadedImageUrls[0],
     });

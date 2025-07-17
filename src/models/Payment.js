@@ -12,6 +12,11 @@ const paymentSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  phone: {
+    type: Number,
+    required: true,
+    trim: true
+  },
   paymentId: {
     type: String,
     required: true,
