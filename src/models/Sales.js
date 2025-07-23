@@ -62,6 +62,24 @@ const SaleSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
   },
+  logs: [
+    {
+      previousData: {
+        customPrice: Number,
+        month: Number,
+        paymentMethod: String,
+        updatedAt: { type: Date, default: Date.now },
+      },
+      renewedBy: {
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        name: String,
+      },
+      renewedAt: { type: Date, default: Date.now },
+    },
+  ],
   assignedEmployee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

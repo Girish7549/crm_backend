@@ -8,11 +8,11 @@ const { login } = require("../controllers/authController");
 
 const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer } = require("../controllers/customerController");
 
-const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone } = require("../controllers/saleController");
+const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale } = require("../controllers/saleController");
 
 const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp } = require("../controllers/followupController");
 
-const { createCallback, getEmpCallback, updateCallback, getEmpTotalCallback } = require("../controllers/callbackController");
+const { createCallback, getEmpCallback, updateCallback, getEmpTotalCallback, getAllCallbacks } = require("../controllers/callbackController");
 
 const { createNotification, getNotificationsByEmployee, deleteNotification } = require("../controllers/notificationController");
 
@@ -69,6 +69,7 @@ router.delete("/customer/:id", deleteCustomer);
 router.get("/customer/search", searchCustomer);
 
 // Callback Routes
+router.get("/callbacks", getAllCallbacks);
 router.get("/callback/employee/:id", getEmpCallback);
 router.get("/totalcallback/employee/:id", getEmpTotalCallback);
 router.put("/callback/:id", updateCallback);
@@ -134,6 +135,7 @@ router.get("/activations/support/:id", getAllSupportActivation);
 router.put("/activations/:id", updateActivation);
 router.put("/activations/addMonth/:id", addMonthInActivation);
 router.put("/activations/oldsale/:id", oldSaleUpdate);
+router.put('/sale/renew/:id', renewSale);
 router.delete("/activations/:id", deleteActivation);
 
 // Trial Activation Routes

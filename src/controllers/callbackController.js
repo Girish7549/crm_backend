@@ -31,6 +31,26 @@ const createCallback = async (req, res) => {
   }
 };
 
+const getAllCallbacks = async (req, res) => {
+  try {
+    const callbacks = await Callback.find()
+      .populate('createdBy', 'name email role') // only selected fields
+      .sort({ createdAt: -1 }) // newest first
+
+    res.status(200).json({
+      success: true,
+      count: callbacks.length,
+      data: callbacks,
+    })
+  } catch (error) {
+    console.error('Error fetching callbacks:', error.message)
+    res.status(500).json({
+      success: false,
+      message: 'Server Error: Unable to fetch callbacks',
+    })
+  }
+}
+
 const getEmpCallback = async (req, res) => {
   try {
     const empId = req.params.id;
@@ -167,6 +187,7 @@ const updateCallback = async (req, res) => {
 
 module.exports = {
   createCallback,
+  getAllCallbacks,
   getEmpCallback,
   updateCallback,
   getEmpTotalCallback,

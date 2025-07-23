@@ -351,7 +351,6 @@ const getSalesByEmployeeAndDateRange1 = async (req, res) => {
   }
 };
 
-
 const getSalesByEmployeeAndDateRange = async (req, res) => {
   try {
     const { dateRange } = req.body;
@@ -406,7 +405,6 @@ const getSalesByEmployeeAndDateRange = async (req, res) => {
     });
   }
 };
-
 
 const getSalesByTeam = async (req, res) => {
   try {
@@ -910,8 +908,8 @@ const searchSalesByPhone = async (req, res) => {
   try {
     const number = req.query.number?.trim();
     const page = parseInt(req.query.page) || 1;
-    const emp = req.query.emp || '';
-    console.log("***************** ", emp, "*******************")
+    const emp = req.query.emp || "";
+    console.log("***************** ", emp, "*******************");
     const limit = 10;
     const skip = (page - 1) * limit;
 
@@ -988,7 +986,9 @@ const searchSalesByPhone = async (req, res) => {
     ];
 
     const result = await Sales.aggregate(pipeline);
-    const sales = result[0]?.data.filter(sale => sale.assignedEmployee._id == emp);
+    const sales = result[0]?.data.filter(
+      (sale) => sale.assignedEmployee._id == emp
+    );
     // console.log("Sale Filter:", sales)
     // console.log("Sale :", result[0].data)
 
@@ -1096,7 +1096,7 @@ const searchAllSalesByPhone = async (req, res) => {
     ];
 
     const result = await Sales.aggregate(pipeline);
-    const sales = result[0]?.data
+    const sales = result[0]?.data;
     // console.log("Sale Filter:", sales)
     // console.log("Sale :", result[0].data)
 
@@ -1122,6 +1122,235 @@ const searchAllSalesByPhone = async (req, res) => {
   }
 };
 
+const renewSale = async (req, res) => {
+  const { id } = req.params;
+  const {
+    saleItemIndex,
+    deviceIndex,
+    device, // deviceType
+    createdAt, // renewal date
+    customPrice,
+    month,
+    paymentMethod,
+    renewedBy, // just the user ID
+  } = req.body;
+
+  console.log("📩 Request Received to Renew Device");
+  console.log("🆔 Sale ID:", id);
+  console.log("📊 Payload:", {
+    saleItemIndex,
+    deviceIndex,
+    device,
+    createdAt,
+    customPrice,
+    month,
+    paymentMethod,
+    renewedBy,
+  });
+
+  try {
+    const sale = await Sales.findById(id);
+    if (!sale) {
+      console.error("❌ Sale not found");
+      return res.status(404).json({ message: "Sale not found" });
+    }
+
+    const saleItem = sale.saleItems[saleItemIndex];
+    if (!saleItem) {
+      console.error("❌ Invalid saleItemIndex");
+      return res.status(400).json({ message: "Invalid saleItemIndex" });
+    }
+
+    console.log("🧾 Found SaleItem:", saleItem);
+
+    const targetDevice = saleItem.devices[deviceIndex];
+    console.log("🎯 Target Device:", targetDevice);
+
+    if (!targetDevice) {
+      console.error("❌ Device not found at given index");
+      return res
+        .status(400)
+        .json({ message: "Device not found at given index" });
+    }
+
+    console.log(
+      `🔍 Comparing deviceType: "${targetDevice.deviceType}" with input: "${device}"`
+    );
+
+    // if (
+    //   targetDevice.deviceType.trim().toLowerCase() !==
+    //   device.trim().toLowerCase()
+    // ) {
+    //   console.error("❌ Device type mismatch");
+    //   return res.status(400).json({
+    //     message: "Device type mismatch",
+    //     expected: targetDevice.deviceType,
+    //     got: device,
+    //   });
+    // }
+
+    const user = await User.findById(renewedBy).select("name");
+    if (!user) {
+      console.error("❌ Renewing user not found");
+      return res.status(404).json({ message: "Renewing user not found" });
+    }
+
+    console.log("👤 Renewed By:", user.name);
+
+    const logEntry = {
+      previousData: {
+        customPrice: targetDevice.customPrice,
+        month: targetDevice.month,
+        paymentMethod: targetDevice.paymentMethod,
+        updatedAt: new Date(targetDevice.createdAt || Date.now()),
+      },
+      renewedBy: {
+        _id: renewedBy,
+        name: user.name,
+      },
+      renewedAt: new Date(createdAt),
+    };
+
+    console.log("📘 Log Entry Prepared:", logEntry);
+
+    const activation = await SaleActivation.findOne({
+      sale: id,
+    });
+
+    if (
+      activation &&
+      activation.deviceInfo.deviceType.trim().toLowerCase() ===
+        targetDevice.deviceType.trim().toLowerCase()
+    ) {
+      activation.currentMonth = 999;
+      const deviceInfoUpdated = {
+        deviceType: device,
+        customPrice: customPrice,
+        plan: activation.deviceInfo.plan,
+        totalMonths: month,
+      };
+      activation.deviceInfo = deviceInfoUpdated;
+      activation.status = 'pending';
+      activation.markModified("deviceInfo");
+      await activation.save();
+
+      // Update device
+      targetDevice.deviceType = device;
+      targetDevice.customPrice = customPrice;
+      targetDevice.month = month;
+      targetDevice.paymentMethod = paymentMethod;
+      targetDevice.createdAt = new Date(createdAt);
+
+      // Push log
+      sale.logs.push(logEntry);
+      await sale.save();
+      console.log("💾 Sale updated and log pushed");
+
+      console.log("✅ Activation matched and updated");
+    } else {
+      console.warn("⚠️ Activation not found or device type mismatch");
+    }
+
+    console.log("⚡ Activation Updated:", activation);
+
+    return res.status(200).json({
+      message: "Device renewed, log stored, and activation updated.",
+      updatedSale: sale,
+      updatedActivation: activation,
+    });
+  } catch (err) {
+    console.error("🔥 Server Error in Renew:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
+// const renewSale = async (req, res) => {
+//   const { id } = req.params;
+//   const {
+//     saleItemIndex,
+//     deviceIndex,
+//     device, // deviceType
+//     createdAt, // renewal date
+//     customPrice,
+//     month,
+//     paymentMethod,
+//     renewedBy, // just the user ID
+//   } = req.body;
+
+//   try {
+//     const sale = await Sales.findById(id);
+//     if (!sale) return res.status(404).json({ message: "Sale not found" });
+
+//     const saleItem = sale.saleItems[saleItemIndex];
+//     if (!saleItem)
+//       return res.status(400).json({ message: "Invalid saleItemIndex" });
+
+//     const targetDevice = saleItem.devices[deviceIndex];
+//     if (!targetDevice || targetDevice.deviceType !== device) {
+//       return res
+//         .status(400)
+//         .json({ message: "Device not found or mismatched deviceType" });
+//     }
+
+//     // Fetch renewed user's name from DB
+//     const user = await User.findById(renewedBy).select("name");
+//     if (!user)
+//       return res.status(404).json({ message: "Renewing user not found" });
+
+//     // Log previous device data
+//     const logEntry = {
+//       previousData: {
+//         customPrice: targetDevice.customPrice,
+//         month: targetDevice.month,
+//         paymentMethod: targetDevice.paymentMethod,
+//         updatedAt: new Date(targetDevice.createdAt || Date.now()),
+//       },
+//       renewedBy: {
+//         _id: renewedBy,
+//         name: user.name,
+//       },
+//       renewedAt: new Date(createdAt),
+//     };
+
+//     // Update device with new values
+//     targetDevice.customPrice = customPrice;
+//     targetDevice.month = month;
+//     targetDevice.paymentMethod = paymentMethod;
+//     targetDevice.createdAt = new Date(createdAt);
+
+//     // Push log into logs array
+//     sale.logs.push(logEntry);
+//     await sale.save();
+
+//     // Update corresponding Activation
+//     const activation = await SaleActivation.findOneAndUpdate(
+//       {
+//         sale: id,
+//         "deviceInfo.deviceType": device,
+//       },
+//       {
+//         $set: { currentMonth: 777 },
+//       },
+//       { new: true }
+//     );
+
+//     return res.status(200).json({
+//       message: "Device renewed, log stored, and activation updated.",
+//       updatedSale: sale,
+//       updatedActivation: activation,
+//     });
+//   } catch (err) {
+//     console.error("Renew Error:", err);
+//     return res
+//       .status(500)
+//       .json({ message: "Server error", error: err.message });
+//   }
+// };
+
+module.exports = renewSale;
+
 module.exports = {
   createSale,
   getAllSale,
@@ -1134,4 +1363,5 @@ module.exports = {
   updateSale,
   deleteSale,
   getSalesByTeam,
+  renewSale,
 };
