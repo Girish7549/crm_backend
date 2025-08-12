@@ -1230,7 +1230,7 @@ const renewSale = async (req, res) => {
         totalMonths: month,
       };
       activation.deviceInfo = deviceInfoUpdated;
-      activation.status = 'pending';
+      activation.status = "pending";
       activation.markModified("deviceInfo");
       await activation.save();
 
@@ -1240,6 +1240,9 @@ const renewSale = async (req, res) => {
       targetDevice.month = month;
       targetDevice.paymentMethod = paymentMethod;
       targetDevice.createdAt = new Date(createdAt);
+
+      // Update sale date because it renew the sale so it count this month sale
+      sale.createdAt = new Date();
 
       // Push log
       sale.logs.push(logEntry);
