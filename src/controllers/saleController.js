@@ -223,17 +223,30 @@ const createSale = async (req, res) => {
 const getAllSale = async (req, res) => {
   try {
     const sales = await Sales.find()
+      // .populate({
+      //   path: "assignedEmployee",
+      //   select: "_id name role team",
+      //   populate: {
+      //     path: "team",
+      //     select: "_id name description",
+      //   },
+      // })
       .populate({
         path: "assignedEmployee",
-        select: "_id name role team",
-        populate: {
-          path: "team",
-          select: "_id name description",
-        },
+        select: "_id name email role assignedService team",
+        populate: [
+          {
+            path: "team",
+            select: "_id name description",
+          },
+          {
+            path: "assignedService",
+            select: "_id name description", 
+          },
+        ],
       })
       .populate({
         path: "customer",
-        // select: "_id name role"
       })
       .populate({
         path: "saleItems",
