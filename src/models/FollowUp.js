@@ -11,7 +11,7 @@ const FollowUpSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
+    // unique: true,
     // required: true
   },
   phone: {
@@ -63,4 +63,5 @@ const FollowUpSchema = new mongoose.Schema({
   },
 });
 
+FollowUpSchema.index({ email: 1 });
 module.exports = mongoose.model("FollowUps", FollowUpSchema);

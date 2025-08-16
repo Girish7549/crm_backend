@@ -7,7 +7,6 @@ const CustomerSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     // required: true,
   },
   phone: {
@@ -54,5 +53,7 @@ const CustomerSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+CustomerSchema.index({ email: 1, purchasedService: 1 }, { unique: true });
 
 module.exports = mongoose.model("Customer", CustomerSchema);

@@ -1,6 +1,6 @@
 const FollowUp = require("../models/FollowUp");
 
-const createFollowUp = async (req, res) => {
+const createFollowUp_OLD_working = async (req, res) => {
   try {
     const { email, salesPerson } = req.body;
 
@@ -37,6 +37,81 @@ const createFollowUp = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+const createFollowUp = async (req, res) => {
+  try {
+    const { email, salesPerson, assignedService, name, phone, address } = req.body;
+
+    // 1️⃣ Check if any followups exist for this email
+    const existingFollowUps = await FollowUp.find({ email }).populate("salesPerson");
+
+    if (existingFollowUps.length > 0) {
+      // Check if same-service followup already exists
+      const sameServiceFollowUp = existingFollowUps.find(
+        (f) => String(f.salesPerson?.assignedService) === String(assignedService)
+      );
+
+      if (sameServiceFollowUp) {
+        if (sameServiceFollowUp.salesPerson) {
+          // 🔹 Case 1: Same service + salesPerson already assigned
+          return res.status(400).json({
+            success: false,
+            message: `Follow-up already exists for this email under service, assigned to ${sameServiceFollowUp.salesPerson.name}.`,
+            data: sameServiceFollowUp,
+          });
+        } else {
+          // 🔹 Case 2: Same service but salesPerson is null → reassign
+          sameServiceFollowUp.salesPerson = salesPerson;
+          sameServiceFollowUp.expiredAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          await sameServiceFollowUp.save();
+
+          return res.status(200).json({
+            success: true,
+            message: "Follow-up reassigned to new salesperson.",
+            followUp: sameServiceFollowUp,
+          });
+        }
+      }
+
+      // 🔹 Case 3: Different service followup exists → allow new followup creation
+      const newFollowUp = new FollowUp({
+        name,
+        email,
+        phone,
+        address,
+        salesPerson,
+        assignedService,
+      });
+
+      await newFollowUp.save();
+      return res.status(201).json({
+        success: true,
+        message: "New follow-up created for different service.",
+        followUp: newFollowUp,
+      });
+    }
+
+    // 🔹 Case 4: No followup at all → create new
+    const newFollowUp = new FollowUp({
+      name,
+      email,
+      phone,
+      address,
+      salesPerson,
+      assignedService,
+    });
+
+    await newFollowUp.save();
+    return res.status(201).json({
+      success: true,
+      message: "Follow-up created successfully.",
+      followUp: newFollowUp,
+    });
+  } catch (error) {
+    console.error("Error creating follow-up:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 const getAllFollowUps = async (req, res) => {
   try {
