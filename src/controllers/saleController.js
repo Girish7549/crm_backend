@@ -81,58 +81,6 @@ const createSale1 = async (req, res) => {
       saleItems,
       paymentMethod,
       assignedEmployee,
-      paymentProof,
-      status,
-    } = req.body;
-
-    const parsedSaleItems = JSON.parse(saleItems);
-    const totalAmountPrice = parsedSaleItems.reduce(
-      (sum, item) => sum + item.amount,
-      0
-    );
-
-    const newSale = new Sales({
-      customer,
-      service,
-      saleItems: parsedSaleItems,
-      paymentMethod,
-      assignedEmployee,
-      totalAmount: totalAmountPrice,
-      status,
-      paymentProof,
-    });
-
-    await newSale.save();
-    const io = req.app.get("io");
-
-    io.emit("new-sale", {
-      message: "A new sale has been created!",
-      saleId: newSale._id,
-      assignedEmployee: newSale.assignedEmployee._id,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Sale Created Successfully",
-      data: newSale,
-    });
-  } catch (err) {
-    console.log("ERROR!", err);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-const createSale = async (req, res) => {
-  try {
-    const {
-      customer,
-      service,
-      saleItems,
-      paymentMethod,
-      assignedEmployee,
       status,
       createdAt,
     } = req.body;
@@ -180,7 +128,114 @@ const createSale = async (req, res) => {
       assignedEmployee,
       totalAmount: totalAmountPrice,
       status,
-      paymentProof: uploadedImageUrls,
+      paymentProof: uploadedImageUrls.map((url) => ({
+        url,
+        date: new Date(),
+        method: paymentMethod || "Unknown",
+      })),
+      createdAt: createdAt ? createdAt : Date.now(),
+    });
+
+    await newSale.save();
+
+    // Populate assignedEmployee to get name
+    await newSale.populate({
+      path: "assignedEmployee",
+      select: "name email phone team",
+    });
+
+    const io = req.app.get("io");
+
+    io.emit("new-sale", {
+      message: "A new sale has been created!",
+      saleId: newSale._id,
+      assignedEmployee: {
+        id: newSale.assignedEmployee._id,
+        name: newSale.assignedEmployee.name,
+        email: newSale.assignedEmployee.email,
+        phone: newSale.assignedEmployee.phone,
+        team: newSale.assignedEmployee.team,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Sale Created Successfully",
+      data: newSale,
+    });
+  } catch (err) {
+    console.error("Create Sale Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const createSale = async (req, res) => {
+  try {
+    const {
+      customer,
+      service,
+      saleItems,
+      assignedEmployee,
+      status,
+      createdAt,
+    } = req.body;
+
+    const parsedSaleItems =
+      typeof saleItems === "string" ? JSON.parse(saleItems) : saleItems;
+
+    const totalAmountPrice = parsedSaleItems.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
+
+    // ⬇️ Step 1: Upload image(s) to Cloudinary
+    let uploadedImageUrls = [];
+
+    if (req.files?.paymentProof?.length > 0) {
+      uploadedImageUrls = await Promise.all(
+        req.files.paymentProof.map((file) =>
+          uploadBufferToCloudinary(file.buffer, file.originalname, "image")
+        )
+      );
+    }
+
+    console.log(
+      "Frontend Data:",
+      customer,
+      service,
+      saleItems,
+      assignedEmployee,
+      status,
+      createdAt
+    );
+
+    // ✅ Extract unique payment methods from saleItems > devices
+    const allPaymentMethods = parsedSaleItems.flatMap((item) =>
+      item.devices.map((device) => device.paymentMethod)
+    );
+
+    const uniquePaymentMethods = [...new Set(allPaymentMethods)];
+
+    // ✅ Create structured paymentProof array
+    const structuredPaymentProof = uploadedImageUrls.map((url, index) => ({
+      url,
+      date: new Date(),
+      method:
+        uniquePaymentMethods[index] || uniquePaymentMethods[0] || "Unknown",
+    }));
+
+    const newSale = new Sales({
+      customer,
+      service,
+      saleItems: parsedSaleItems,
+      paymentMethod: uniquePaymentMethods.join(" / "),
+      assignedEmployee,
+      totalAmount: totalAmountPrice,
+      status,
+      paymentProof: structuredPaymentProof,
       createdAt: createdAt ? createdAt : Date.now(),
     });
 
@@ -241,7 +296,7 @@ const getAllSale = async (req, res) => {
           },
           {
             path: "assignedService",
-            select: "_id name description", 
+            select: "_id name description",
           },
         ],
       })
@@ -421,7 +476,10 @@ const getSalesByEmployeeAndDateRange = async (req, res) => {
 
 const getSalesByTeam = async (req, res) => {
   try {
-    const teamId = req.params.id?.trim();
+    const teamId = req.params.teamId?.trim();
+    const companyId = req.params.companyId?.trim();
+    console.log("company :", companyId);
+    console.log("teamId :", teamId);
 
     if (!mongoose.Types.ObjectId.isValid(teamId)) {
       return res.status(400).json({
@@ -431,12 +489,20 @@ const getSalesByTeam = async (req, res) => {
     }
 
     const teamObjectId = new mongoose.Types.ObjectId(String(teamId));
+    const companyObjectId = new mongoose.Types.ObjectId(String(companyId));
 
     const allAgents = await User.find({ role: "sales_agent" });
+    console.log("All employee", allAgents);
+
+    // const teamAgents = allAgents.filter((user) =>
+    //   user.team?.equals(teamObjectId)
+    // );
 
     const teamAgents = allAgents.filter((user) =>
-      user.team?.equals(teamObjectId)
+        user.team?.equals(teamObjectId) &&
+        user.assignedService?.equals(companyObjectId)
     );
+
     const userIds = teamAgents.map((user) => user._id);
 
     if (userIds.length === 0) {
@@ -681,25 +747,33 @@ const updateSale = async (req, res) => {
         ? JSON.parse(req.body.saleItems)
         : req.body.saleItems;
 
-    updateData.saleItems = parsedSaleItems; // ✅ move here so it's always applied
+    updateData.saleItems = parsedSaleItems;
 
     // Step 1: Handle Image File Upload (paymentProof)
     if (req.files?.paymentProof?.length > 0) {
-      const deletePromises = (sale.paymentProof || []).map((url) => {
-        const parts = url.split("/");
-        const fileName = parts[parts.length - 1].split(".")[0];
-        const publicId = `sales/paymentProofs/${fileName}`;
-        return cloudinary.uploader.destroy(publicId);
-      });
-      await Promise.all(deletePromises);
+      // const deletePromises = (sale.paymentProof || []).map((url) => {
+      //   const parts = url.split("/");
+      //   const fileName = parts[parts.length - 1].split(".")[0];
+      //   const publicId = `sales/paymentProofs/${fileName}`;
+      //   return cloudinary.uploader.destroy(publicId);
+      // });
+      // await Promise.all(deletePromises);
 
       const uploadedImageUrls = await Promise.all(
         req.files.paymentProof.map((file) =>
           uploadBufferToCloudinary(file.buffer, file.originalname, "image")
         )
       );
+      const newPaymentProofs = uploadedImageUrls.map((url) => ({
+        url,
+        date: new Date(),
+        method: updateData.paymentMethod?.split(" / ")[0] || "Unknown",
+      }));
 
-      updateData.paymentProof = uploadedImageUrls;
+      updateData.paymentProof = [
+        ...(sale.paymentProof || []),
+        ...newPaymentProofs,
+      ];
     }
 
     // Step 2: Handle Audio File Upload (voiceNote)
@@ -840,7 +914,11 @@ const getUnactivatedSalesByTeam1 = async (req, res) => {
 
 const getUnactivatedSalesByTeam = async (req, res) => {
   try {
-    const teamId = req.params.id; // keep it as a string for comparison
+    const teamId = req.params.teamId; // keep it as a string for comparison
+    const companyId = req.params.companyId; // keep it as a string for comparison
+
+    console.log("Team id active :", teamId)
+    console.log("Company id active :", companyId)
 
     // 1. Get all SaleActivation records to exclude activated sales
     const activatedSales = await SaleActivation.find({}, "sale");
@@ -850,7 +928,7 @@ const getUnactivatedSalesByTeam = async (req, res) => {
     const allSales = await Sales.find()
       .populate({
         path: "assignedEmployee",
-        select: "name email team",
+        select: "name email team assignedService",
         populate: {
           path: "team",
           select: "_id name",
@@ -861,7 +939,9 @@ const getUnactivatedSalesByTeam = async (req, res) => {
     // 3. Filter sales based on team and activation/device logic
     const filteredSales = allSales.filter((sale) => {
       const teamObjId = sale?.assignedEmployee?.team?._id;
-      const teamMatch = teamObjId && teamObjId.toString() === teamId;
+      const companyObjId = sale?.assignedEmployee?.assignedService;
+      const teamMatch = teamObjId && companyObjId && teamObjId.toString() === teamId && companyObjId.toString() === companyId;
+      console.log("----------COMPANY :", sale?.assignedEmployee)
 
       const hasNewDevice = sale.saleItems?.some((item) =>
         item.devices?.some((device) => device?.new === true)

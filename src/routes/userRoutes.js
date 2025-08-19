@@ -94,11 +94,12 @@ router.get("/teams", getAllTeams);
 
 // Sale Routes
 router.get("/sales", getAllSale);
-router.get("/sales/team/:id", getSalesByTeam);
+// router.get("/sales/team/:id", getSalesByTeam);
+router.get("/sales/company/:companyId/team/:teamId", getSalesByTeam);
 router.get("/sales/employee/:id", getSaleByEmp);
 router.post("/sales/employee-date-range/:id", getSalesByEmployeeAndDateRange);
 router.get("/sales/team-pending/:id", getTeamPendingSale);
-router.get("/sales/not-activate/:id", getUnactivatedSalesByTeam);
+router.get("/sales/not-activate/:teamId/company/:companyId", getUnactivatedSalesByTeam);
 router.put(
   "/sale/:id",
   upload.fields([

@@ -52,7 +52,13 @@ const SaleSchema = new mongoose.Schema({
     type: Number,
   },
   paymentProof: {
-    type: [String],
+    type: [
+      {
+        url: { type: String },
+        date: { type: Date, default: Date.now },
+        method: { type: String },
+      },
+    ],
     default: [],
   },
   voiceProof: {
