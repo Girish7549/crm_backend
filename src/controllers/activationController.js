@@ -338,13 +338,18 @@ const createActivation = async (req, res) => {
     const emp = await User.findById(assignedEmployee);
     const io = req.app.get("io");
 
-    const support = await User.findById(assignedEmployee).populate("name email role team");
+    const support = await User.findById(assignedEmployee).populate(
+      "name email role team"
+    );
 
-    const employee = await User.findById(sale.assignedEmployee).populate("name email role team");
+    const employee = await User.findById(sale.assignedEmployee).populate(
+      "name email role team"
+    );
 
-    const customerInfo = await Customer.findById(customer).populate("name email phone")
+    const customerInfo = await Customer.findById(customer).populate(
+      "name email phone"
+    );
 
-    
     console.log("Sale Executive :", employee.name);
     console.log("Support :", support.name);
 
@@ -368,7 +373,169 @@ const createActivation = async (req, res) => {
   }
 };
 // Get All Activations (Paginated)
+
 const getAllActivations = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const serviceId = req.query.serviceId?.trim(); // Changed to query param
+    const teamId = req.query.teamId?.trim(); // Optional team filter
+    const role = req.query.role || "support"; // Optional, default role = support
+
+    console.log("🔍 Filtering by:");
+    console.log("Service ID:", serviceId);
+    console.log("Team ID:", teamId);
+    console.log("Role:", role);
+    
+    // Build user filter
+    const userFilter = {};
+    if (serviceId) userFilter.assignedService = serviceId;
+    if (teamId) userFilter.team = teamId;
+    if (role) userFilter.role = role;
+
+    const users = await User.find(userFilter).select("_id");
+    const employeeIds = users.map((u) => u._id);
+    console.log("employeeIds:", employeeIds);
+
+    
+    if (employeeIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No users found for given filters",
+        data: [],
+        pagination: {
+          totalItems: 0,
+          currentPage: page,
+          totalPages: 0,
+          perPage: limit,
+        },
+      });
+    }
+
+    const filter = {
+      assignedEmployee: { $in: employeeIds },
+    };
+
+    const total = await SaleActivation.countDocuments(filter);
+
+    const activations = await SaleActivation.find(filter)
+      .populate("customer")
+      .populate({
+        path: "assignedEmployee",
+        populate: [
+          { path: "team", select: "name" },
+          { path: "assignedService", select: "name" },
+        ],
+      })
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
+          select: "name email",
+        },
+      })
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Filtered activations retrieved",
+      data: activations,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching activations:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+// const getAllActivations = async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = 10;
+//     const skip = (page - 1) * limit;
+
+//     const assignedService = req.params.id;
+//     console.log("Company :", assignedService);
+
+//     const filter = {};
+
+//     if (assignedService) {
+//       // ✅ Use correct field name (assignedService)
+//       const employeesWithService = await User.find({
+//         assignedService: assignedService,
+//       }).select("_id");
+
+//       const employeeIds = employeesWithService.map((emp) => emp._id);
+//       console.log("Extract Employee Id :", employeeIds);
+
+//       filter.assignedEmployee = { $in: employeeIds };
+//     }
+
+//     const total = await SaleActivation.countDocuments(filter);
+
+//     const activations = await SaleActivation.find(filter)
+//       .populate("customer")
+//       .populate({
+//         path: "assignedEmployee",
+//         populate: {
+//           path: "assignedService", // ✅ Also corrected here
+//         },
+//       })
+//       .populate({
+//         path: "notes",
+//         populate: {
+//           path: "employee",
+//           model: "User",
+//           select: "name email",
+//         },
+//       })
+//       .populate({
+//         path: "sale",
+//         populate: {
+//           path: "assignedEmployee",
+//           select: "name email",
+//         },
+//       })
+//       .limit(limit)
+//       .skip(skip)
+//       .sort({ createdAt: -1 });
+
+//     console.log("Activations Employee :", activations);
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Filtered activations retrieved",
+//       data: activations,
+//       pagination: {
+//         totalItems: total,
+//         currentPage: page,
+//         totalPages: Math.ceil(total / limit),
+//         perPage: limit,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Error fetching activations:", err);
+//     res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
+
+const getAllActivations_Old = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
@@ -459,7 +626,7 @@ const getTeamActivations1 = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-const getTeamActivations = async (req, res) => {
+const getTeamActivations_working = async (req, res) => {
   try {
     const teamId = req.params.id?.trim();
     const page = parseInt(req.query.page) || 1;
@@ -503,7 +670,93 @@ const getTeamActivations = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-const getTeamStatusFilterActivations = async (req, res) => {
+const getTeamActivations = async (req, res) => {
+  try {
+    const teamId = req.params.teamId?.trim();
+    const serviceId = req.params.serviceId?.trim();
+    console.log("*********** Team id :", teamId);
+    console.log("*********** Service id :", serviceId);
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    // Step 1: Find users that match both the team and assignedService
+    const matchingUsers = await User.find({
+      team: teamId,
+      role: "support",
+      assignedService: serviceId,
+    }).select("_id");
+
+    const employeeIds = matchingUsers.map((user) => user._id);
+    console.log("*********** Matching Users id :", matchingUsers);
+
+    if (employeeIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No users found for given team and service",
+        data: [],
+        pagination: {
+          totalItems: 0,
+          currentPage: page,
+          totalPages: 0,
+          perPage: limit,
+        },
+      });
+    }
+
+    // Step 2: Query activations assigned to those employees
+    const total = await SaleActivation.countDocuments({
+      assignedEmployee: { $in: employeeIds },
+    });
+
+    const activations = await SaleActivation.find({
+      assignedEmployee: { $in: employeeIds },
+    })
+      .populate("customer")
+      .populate({
+        path: "assignedEmployee",
+        populate: [
+          { path: "team", select: "name" },
+          { path: "assignedService", select: "name" },
+        ],
+      })
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
+          select: "name email",
+        },
+      })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Filtered activations retrieved",
+      data: activations,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching activations:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+const getTeamStatusFilterActivations_old_working = async (req, res) => {
   try {
     const teamId = req.params.id?.trim();
     const status = req.query.status?.trim();
@@ -561,6 +814,89 @@ const getTeamStatusFilterActivations = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+const getTeamStatusFilterActivations = async (req, res) => {
+  try {
+    const teamId = req.params.id?.trim();
+    const status = req.query.status?.trim();
+    const serviceId = req.query.serviceId?.trim();
+    const role = "support";
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const userFilter = {};
+    if (teamId && teamId !== "null") userFilter.team = teamId;
+    if (serviceId) userFilter.assignedService = serviceId;
+    if (role) userFilter.role = role;
+
+    const users = await User.find(userFilter).select("_id");
+    const employeeIds = users.map((u) => u._id);
+
+    if (employeeIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No matching users found",
+        data: [],
+        pagination: {
+          totalItems: 0,
+          currentPage: page,
+          totalPages: 0,
+          perPage: limit,
+        },
+      });
+    }
+
+    const activationFilter = {
+      assignedEmployee: { $in: employeeIds },
+    };
+    if (status) activationFilter.status = status;
+
+    const total = await SaleActivation.countDocuments(activationFilter);
+
+    const activations = await SaleActivation.find(activationFilter)
+      .populate("customer")
+      .populate({
+        path: "assignedEmployee",
+        populate: [
+          { path: "team", select: "name" },
+          { path: "assignedService", select: "name" },
+        ],
+      })
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
+          select: "name email",
+        },
+      })
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Filtered activations retrieved",
+      data: activations,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching filtered activations:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 // Get Activations by Employee
 const getAllSupportActivation = async (req, res) => {
   try {
@@ -933,7 +1269,7 @@ const deleteActivation = async (req, res) => {
   }
 };
 
-const searchActivations = async (req, res) => {
+const searchActivations_working  = async (req, res) => {
   try {
     const page = req.query.page || 1;
     const query = req.query.query;
@@ -963,8 +1299,8 @@ const searchActivations = async (req, res) => {
       .populate({
         path: "sale",
         populate: {
-          path: "assignedEmployee"
-        }
+          path: "assignedEmployee",
+        },
       })
       .populate("customer")
       .populate("assignedEmployee")
@@ -988,6 +1324,105 @@ const searchActivations = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+const searchActivations = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const query = req.query.query?.trim();
+    const teamId = req.query.teamId?.trim();
+    const serviceId = req.query.serviceId?.trim();
+    const role = "support"; // optional
+
+    if (!query) {
+      return res.status(400).json({ success: false, message: "Search query is required." });
+    }
+
+    // Step 1: Find matching customers
+    const customers = await Customer.find({
+      $or: [
+        { phone: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+        { name: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    if (customers.length === 0) {
+      return res.status(404).json({ message: "No customers found with that query." });
+    }
+
+    const customerIds = customers.map((customer) => customer._id);
+
+    // Step 2: Find employees matching team/service/role filters
+    const userFilter = {};
+    if (teamId) userFilter.team = teamId;
+    if (serviceId) userFilter.assignedService = serviceId;
+    if (role) userFilter.role = role;
+
+    const matchedUsers = await User.find(userFilter).select("_id");
+    const employeeIds = matchedUsers.map((u) => u._id);
+
+    if (employeeIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No employees found matching team/service filters.",
+        data: [],
+      });
+    }
+
+    // Step 3: Search activations with both filters
+    const filter = {
+      customer: { $in: customerIds },
+      assignedEmployee: { $in: employeeIds },
+    };
+
+    const total = await SaleActivation.countDocuments(filter);
+
+    const activations = await SaleActivation.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .populate("customer")
+      .populate({
+        path: "assignedEmployee",
+        populate: [
+          { path: "team", select: "name" },
+          { path: "assignedService", select: "name" },
+        ],
+      })
+      .populate({
+        path: "sale",
+        populate: {
+          path: "assignedEmployee",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "notes",
+        populate: {
+          path: "employee",
+          model: "User",
+          select: "name email",
+        },
+      });
+
+    return res.status(200).json({
+      success: true,
+      message: "Filtered activations retrieved successfully",
+      data: activations,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        perPage: limit,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching activations by query:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 module.exports = {
   createActivation,

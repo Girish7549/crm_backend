@@ -128,7 +128,8 @@ router.get("/sales/search-all-sale", searchAllSalesByPhone);
 // Sale Activation Routes
 router.post("/activations", createActivation);
 router.get("/activations", getAllActivations);
-router.get("/activations/team/:id", getTeamActivations);
+// router.get("/activations/team/:id", getTeamActivations);
+router.get("/activations/team/:teamId/service/:serviceId", getTeamActivations);
 router.get("/activations/team-status/:id", getTeamStatusFilterActivations);
 router.get("/activations/search", searchActivations);
 router.get("/activations/:id", getActivationById);
