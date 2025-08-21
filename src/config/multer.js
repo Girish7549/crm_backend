@@ -18,11 +18,11 @@ const upload = multer({
     const extname = path.extname(file.originalname).toLowerCase();
     const mimetype = file.mimetype;
 
-    if (file.fieldname === "paymentProof") {
+    if (["paymentProof", "image"].includes(file.fieldname)) {
       if (imageTypes.test(extname) && mimetype.startsWith("image/")) {
         return cb(null, true);
       } else {
-        return cb(new Error("Only image files are allowed for paymentProof."));
+        return cb(new Error("Only image files are allowed."));
       }
     }
 

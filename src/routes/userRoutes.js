@@ -37,6 +37,7 @@ const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require(
 const { createAttendence, getAllAttendence, deleteAttandence } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
+const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
 
 // Service Routes
 router.post("/service", createService);
@@ -186,5 +187,13 @@ router.post("/payments", upload.fields([ { name: "paymentProof", maxCount: 2 } ]
 router.get("/payments", getPayments);
 router.get("/payments/:id", getPaymentById);
 router.delete("/payments/:id", deletePaymentById);
+
+//Account Company Payment Page
+router.get("/account", getAllAccounts);
+router.get("/account/by-company", getAccountByCompany);
+router.get("/account/:id", getAccountById);
+router.post("/account", upload.fields([{ name: "image", maxCount: 1 }]), createAccount);
+router.put("/account/:id", upload.fields([{ name: "image", maxCount: 1 }]), updateAccount);
+router.delete("/account/:id", deleteAccount);
 
 module.exports = router;
