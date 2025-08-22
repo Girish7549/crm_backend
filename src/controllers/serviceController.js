@@ -46,11 +46,11 @@ const getService = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, revenue, profit, manager } = req.body;
+    const { name, description, revenue, profit, manager, plans } = req.body;
 
     const updatedService = await Service.findByIdAndUpdate(
       id,
-      { name, description, revenue, profit, manager },
+      { name, description, revenue, profit, manager , plans},
       { new: true, runValidators: true }
     );
 
