@@ -8,7 +8,7 @@ const { login } = require("../controllers/authController");
 
 const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer } = require("../controllers/customerController");
 
-const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale } = require("../controllers/saleController");
+const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail } = require("../controllers/saleController");
 
 const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp } = require("../controllers/followupController");
 
@@ -109,22 +109,11 @@ router.put(
   ]),
   updateSale
 );
-router.post(
-  "/sale",
-  upload.fields([
-    { name: "paymentProof", maxCount: 5 },
-    { name: "voiceProof", maxCount: 1 },
-  ]),
-  createSale
-);
+router.post( "/sale", upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 } ]), createSale );
 router.delete("/sale/:id", deleteSale);
 router.get("/sales/search", searchSalesByPhone);
 router.get("/sales/search-all-sale", searchAllSalesByPhone);
-// router.post("/sale", upload.single("paymentProof"), createSale);
-// router.put("/sale/:id", upload.array("paymentProof", 5), updateSale); // 5 image ki limit lagai hai bss
-// For multiple fields (PUT request for update)
-// For single file (POST request for create)
-// router.post("/sale", upload.single("paymentProof"), createSale);
+router.post("/send-invoice", upload.single("file"), sendEmail);
 
 // Sale Activation Routes
 router.post("/activations", createActivation);

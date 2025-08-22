@@ -16,6 +16,7 @@ const createPayment = async (req, res) => {
     if (existingPayment) {
       return res.status(409).json({ error: "Payment ID already exists." });
     }
+    console.log("Email :", email)
 
     const customer = await Customer.findOne({ email });
     if (!customer) {

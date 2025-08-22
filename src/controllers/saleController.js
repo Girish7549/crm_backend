@@ -1,6 +1,7 @@
 const Sales = require("../models/Sales");
 const SaleActivation = require("../models/SaleActivation");
 const User = require("../models/User");
+const nodemailer = require("nodemailer");
 const cloudinary = require("../config/cloudinaryConfig");
 const mongoose = require("mongoose");
 
@@ -335,6 +336,7 @@ const getSaleByEmp = async (req, res) => {
         path: "customer",
         select: "_id name email phone whatsapp address team",
       })
+      .populate("service")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -498,7 +500,8 @@ const getSalesByTeam = async (req, res) => {
     //   user.team?.equals(teamObjectId)
     // );
 
-    const teamAgents = allAgents.filter((user) =>
+    const teamAgents = allAgents.filter(
+      (user) =>
         user.team?.equals(teamObjectId) &&
         user.assignedService?.equals(companyObjectId)
     );
@@ -917,8 +920,8 @@ const getUnactivatedSalesByTeam = async (req, res) => {
     const teamId = req.params.teamId; // keep it as a string for comparison
     const companyId = req.params.companyId; // keep it as a string for comparison
 
-    console.log("Team id active :", teamId)
-    console.log("Company id active :", companyId)
+    console.log("Team id active :", teamId);
+    console.log("Company id active :", companyId);
 
     // 1. Get all SaleActivation records to exclude activated sales
     const activatedSales = await SaleActivation.find({}, "sale");
@@ -940,8 +943,12 @@ const getUnactivatedSalesByTeam = async (req, res) => {
     const filteredSales = allSales.filter((sale) => {
       const teamObjId = sale?.assignedEmployee?.team?._id;
       const companyObjId = sale?.assignedEmployee?.assignedService;
-      const teamMatch = teamObjId && companyObjId && teamObjId.toString() === teamId && companyObjId.toString() === companyId;
-      console.log("----------COMPANY :", sale?.assignedEmployee)
+      const teamMatch =
+        teamObjId &&
+        companyObjId &&
+        teamObjId.toString() === teamId &&
+        companyObjId.toString() === companyId;
+      console.log("----------COMPANY :", sale?.assignedEmployee);
 
       const hasNewDevice = sale.saleItems?.some((item) =>
         item.devices?.some((device) => device?.new === true)
@@ -1362,90 +1369,198 @@ const renewSale = async (req, res) => {
   }
 };
 
-// const renewSale = async (req, res) => {
-//   const { id } = req.params;
-//   const {
-//     saleItemIndex,
-//     deviceIndex,
-//     device, // deviceType
-//     createdAt, // renewal date
-//     customPrice,
-//     month,
-//     paymentMethod,
-//     renewedBy, // just the user ID
-//   } = req.body;
-
+// const sendEmail = async (req, res) => {
 //   try {
-//     const sale = await Sales.findById(id);
-//     if (!sale) return res.status(404).json({ message: "Sale not found" });
+//     const { email } = req.body;
+//     const file = req.file;
 
-//     const saleItem = sale.saleItems[saleItemIndex];
-//     if (!saleItem)
-//       return res.status(400).json({ message: "Invalid saleItemIndex" });
-
-//     const targetDevice = saleItem.devices[deviceIndex];
-//     if (!targetDevice || targetDevice.deviceType !== device) {
+//     if (!email || !file) {
 //       return res
 //         .status(400)
-//         .json({ message: "Device not found or mismatched deviceType" });
+//         .json({ success: false, message: "Email and file are required" });
 //     }
 
-//     // Fetch renewed user's name from DB
-//     const user = await User.findById(renewedBy).select("name");
-//     if (!user)
-//       return res.status(404).json({ message: "Renewing user not found" });
-
-//     // Log previous device data
-//     const logEntry = {
-//       previousData: {
-//         customPrice: targetDevice.customPrice,
-//         month: targetDevice.month,
-//         paymentMethod: targetDevice.paymentMethod,
-//         updatedAt: new Date(targetDevice.createdAt || Date.now()),
+//     // Nodemailer setup
+//     const transporter = nodemailer.createTransport({
+//       service: "gmail",
+//       auth: {
+//         user: process.env.SMTP_USER,
+//         pass: process.env.SMTP_PASS,
 //       },
-//       renewedBy: {
-//         _id: renewedBy,
-//         name: user.name,
-//       },
-//       renewedAt: new Date(createdAt),
-//     };
-
-//     // Update device with new values
-//     targetDevice.customPrice = customPrice;
-//     targetDevice.month = month;
-//     targetDevice.paymentMethod = paymentMethod;
-//     targetDevice.createdAt = new Date(createdAt);
-
-//     // Push log into logs array
-//     sale.logs.push(logEntry);
-//     await sale.save();
-
-//     // Update corresponding Activation
-//     const activation = await SaleActivation.findOneAndUpdate(
-//       {
-//         sale: id,
-//         "deviceInfo.deviceType": device,
-//       },
-//       {
-//         $set: { currentMonth: 777 },
-//       },
-//       { new: true }
-//     );
-
-//     return res.status(200).json({
-//       message: "Device renewed, log stored, and activation updated.",
-//       updatedSale: sale,
-//       updatedActivation: activation,
 //     });
+
+//     await transporter.sendMail({
+//       from: `"Your Company" <${process.env.SMTP_USER}>`,
+//       to: email,
+//       subject: "Your Invoice",
+//       text: "Please find attached your invoice.",
+//       attachments: [
+//         {
+//           filename: file.originalname,
+//           content: file.buffer,
+//         },
+//       ],
+//     });
+
+//     res.json({ success: true, message: "Invoice sent!" });
 //   } catch (err) {
-//     console.error("Renew Error:", err);
-//     return res
-//       .status(500)
-//       .json({ message: "Server error", error: err.message });
+//     console.error("Mail error:", err);
+//     res.status(500).json({ success: false, message: "Failed to send invoice" });
 //   }
 // };
 
-module.exports = renewSale;
+const sendEmailOLD = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const file = req.file;
+
+    if (!email || !file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and file are required" });
+    }
+
+    // Use explicit host/port for more predictable results (Gmail SMTP example)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.hostinger.com",
+      port: 465,
+      secure: false, // use TLS with port 587
+      auth: {
+        user: "invoice@deemandtv.com",
+        pass: "Adzdrio@321", // App Password for Gmail
+      },
+    });
+
+    // Optional: verify connection configuration (good for debugging)
+    try {
+      await transporter.verify();
+      console.log("SMTP transporter verified");
+    } catch (verifyErr) {
+      console.warn("SMTP transporter verification failed:", verifyErr);
+      // continue — verification failure often indicates auth issue or network
+    }
+
+    const mailOptions = {
+      from: `"Yahu Baba" <lk8218299028@gmail.com>`,
+      to: email,
+      subject: "Your Invoice",
+      text: "Please find attached your invoice.",
+      // attachments: [
+      //   {
+      //     filename: file.originalname || "invoice.pdf",
+      //     content: file.buffer,
+      //   },
+      // ],
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    // Log the full info object (contains messageId, accepted, rejected, response)
+    console.log("sendMail info:", info);
+
+    // Helpful checks:
+    // - info.accepted: array of recipients accepted by the SMTP server
+    // - info.rejected: array of recipients rejected by the SMTP server
+    // - info.response: server response message
+
+    if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+      console.warn("Some recipients were rejected:", info.rejected);
+      return res.status(502).json({
+        success: false,
+        message: "Recipient rejected by SMTP server",
+        info,
+      });
+    }
+
+    return res.json({ success: true, message: "Invoice sent!", info });
+  } catch (err) {
+    console.error("Mail error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send invoice",
+      error: err.message,
+    });
+  }
+};
+
+const sendEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const file = req.file;
+
+    if (!email || !file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and file are required" });
+    }
+
+    // Hostinger SMTP (port 465 uses SSL -> secure: true)
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.hostinger.com",
+      port: parseInt(process.env.SMTP_PORT || "465", 10),
+      secure: true, // true for 465 (SSL)
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      greetingTimeout: 20000,
+      connectionTimeout: 30000,
+      socketTimeout: 30000,
+    });
+
+    // Verify transporter (useful to see obvious auth/connect problems)
+    try {
+      await transporter.verify();
+      console.log("SMTP transporter verified");
+    } catch (verifyErr) {
+      console.warn(
+        "SMTP transporter verify failed:",
+        verifyErr && verifyErr.message ? verifyErr.message : verifyErr
+      );
+      // continue — sendMail will show error if verify fails
+    }
+
+    const mailOptions = {
+      from: `"${process.env.FROM_NAME || "Your Company"}" <${
+        process.env.FROM_EMAIL || process.env.SMTP_USER
+      }>`,
+      to: email,
+      subject: "Your Invoice",
+      text: "Please find attached your invoice."
+      // attachments: [
+      //   {
+      //     filename: file.originalname || "invoice.pdf",
+      //     content: file.buffer,
+      //     contentType: file.mimetype || "application/pdf",
+      //   },
+      // ],
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("sendMail info:", info);
+
+    if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+      console.warn("Some recipients were rejected:", info.rejected);
+      return res
+        .status(502)
+        .json({
+          success: false,
+          message: "Recipient rejected by SMTP server",
+          info,
+        });
+    }
+
+    return res.json({ success: true, message: "Invoice sent!", info });
+  } catch (err) {
+    console.error("Mail error:", err);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to send invoice",
+        error: err.message || err,
+      });
+  }
+};
 
 module.exports = {
   createSale,
@@ -1460,4 +1575,5 @@ module.exports = {
   deleteSale,
   getSalesByTeam,
   renewSale,
+  sendEmail,
 };

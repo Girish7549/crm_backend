@@ -14,7 +14,14 @@ const SaleSchema = new mongoose.Schema({
     {
       plan: {
         type: String,
-        enum: ["gold", "platinum", "diamond"],
+        enum: [
+          "gold",
+          "platinum",
+          "diamond",
+          "Ultimate Vip Plan",
+          "Premium Plus Plan",
+          "Essential Plan",
+        ],
         required: true,
       },
       amount: {
