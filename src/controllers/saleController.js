@@ -1484,30 +1484,27 @@ const sendEmailOLD = async (req, res) => {
 
 const sendEmail = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { name, email, company, plan, month, amount, invoiceNumber,  } = req.body;
     const file = req.file;
 
-    if (!email || !file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email and file are required" });
+    if (!email || !company || !file) {
+      return res.status(400).json({
+        success: false,
+        message: "Email & Company Name & file are required",
+      });
     }
 
     // Hostinger SMTP (port 465 uses SSL -> secure: true)
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.hostinger.com",
-      port: parseInt(process.env.SMTP_PORT || "465", 10),
+      port: process.env.SMTP_PORT || 465,
       secure: true, // true for 465 (SSL)
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      greetingTimeout: 20000,
-      connectionTimeout: 30000,
-      socketTimeout: 30000,
     });
 
-    // Verify transporter (useful to see obvious auth/connect problems)
     try {
       await transporter.verify();
       console.log("SMTP transporter verified");
@@ -1516,23 +1513,137 @@ const sendEmail = async (req, res) => {
         "SMTP transporter verify failed:",
         verifyErr && verifyErr.message ? verifyErr.message : verifyErr
       );
-      // continue — sendMail will show error if verify fails
     }
+    const html = `
+<!-- Preheader (hidden preview text) -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+  Your ${company} subscription invoice — ${invoiceNumber}
+</div>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #eaeaf1;">
+        <!-- Header -->
+        <tr>
+          <td style="background:#111827;padding:20px 24px;">
+            <table role="presentation" width="100%">
+              <tr>
+                <td align="left" style="vertical-align:middle;">
+                  <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company} logo" width="140" style="display:block;max-width:140px;height:auto;border:0;outline:none;text-decoration:none;">
+                </td>
+                <td align="right" style="vertical-align:middle;">
+                  <div style="font:600 14px/1.4 Arial,Helvetica,sans-serif;color:#e5e7eb;">${company}</div>
+                  <div style="font:400 12px/1.4 Arial,Helvetica,sans-serif;color:#9ca3af;">Invoice • ${invoiceNumber}</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Greeting -->
+        <tr>
+          <td style="padding:28px 24px 8px 24px;">
+            <div style="font:700 20px/1.3 Arial,Helvetica,sans-serif;color:#111827;">Dear ${name},</div>
+            <div style="height:8px;"></div>
+            <div style="font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#374151;">
+              Thank you for choosing <strong>${company}</strong>. Below are your subscription details and invoice summary.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Plan Details -->
+        <tr>
+          <td style="padding:12px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #eaeaf1;border-radius:10px;overflow:hidden;">
+              <tr>
+                <td colspan="2" style="background:#f3f4f6;padding:12px 16px;font:600 14px Arial,Helvetica,sans-serif;color:#111827;">Subscription Details</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;width:40%;">Plan</td>
+                <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">${plan}</td>
+              </tr>
+              <tr style="background:#fafafa;">
+                <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;">Duration</td>
+                <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">${month} month(s)</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;font:700 13px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">Total Amount</td>
+                <td style="padding:12px 16px;font:700 16px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">${amount}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:8px 24px 4px 24px;">
+           
+            <div style="clear:both;height:10px;"></div>
+            <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#6b7280;">
+              Your invoice is also attached for your records. If you have any questions about your subscription, we’re happy to help.
+            </div>
+          </td>
+        </tr>
+
+        <!-- Extra touch -->
+        <tr>
+          <td style="padding:8px 24px 20px 24px;">
+            <div style="background:#f9fafb;border:1px solid #eef0f4;border-radius:10px;padding:12px 14px;">
+              <div style="font:600 13px Arial,Helvetica,sans-serif;color:#111827;margin-bottom:4px;">A little extra from us</div>
+              <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#4b5563;">
+                We’re constantly enhancing your experience with fresh, high-quality digital entertainment. 
+                Thank you for being part of ${company}.
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#111827;color:#d1d5db;padding:14px 24px;">
+            <table role="presentation" width="100%">
+              <tr>
+                <td align="left" style="font:400 12px Arial,Helvetica,sans-serif;">
+                  © ${new Date().getFullYear()} ${company}. All rights reserved.
+                </td>
+                <td align="right" style="font:400 12px Arial,Helvetica,sans-serif;">
+                  <a href="mailto:${process.env.SMTP_USER}" style="color:#d1d5db;text-decoration:none;">${process.env.SMTP_USER}</a> &nbsp;|&nbsp; 
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+      <div style="height:24px;"></div>
+      <!-- Unsubscribe (helps deliverability) -->
+      <div style="font:400 11px Arial,Helvetica,sans-serif;color:#6b7280;">
+        To manage notifications, reply to this email or visit your account settings.
+      </div>
+    </td>
+  </tr>
+</table>
+`;
 
     const mailOptions = {
-      from: `"${process.env.FROM_NAME || "Your Company"}" <${
-        process.env.FROM_EMAIL || process.env.SMTP_USER
+      from: `"${process.env.company || "DeemandTv"}" <${
+        process.env.SMTP_USER
       }>`,
-      to: email,
-      subject: "Your Invoice",
-      text: "Please find attached your invoice."
-      // attachments: [
-      //   {
-      //     filename: file.originalname || "invoice.pdf",
-      //     content: file.buffer,
-      //     contentType: file.mimetype || "application/pdf",
-      //   },
-      // ],
+      to: 'hp.code7@gmail.com', // recipient
+      subject: `Your ${process.env.company || "DeemandTv"} Subscription Invoice`,
+      html,
+      headers: {
+        // Helps inboxing on Gmail/Yahoo/Outlook
+        "List-Unsubscribe": `<mailto:${process.env.SMTP_USER}>`,
+      },
+      attachments: [
+        {
+          filename: file.originalname || "invoice.pdf",
+          content: file.buffer,
+          contentType: file.mimetype || "application/pdf",
+        },
+      ],
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -1540,25 +1651,21 @@ const sendEmail = async (req, res) => {
 
     if (Array.isArray(info.rejected) && info.rejected.length > 0) {
       console.warn("Some recipients were rejected:", info.rejected);
-      return res
-        .status(502)
-        .json({
-          success: false,
-          message: "Recipient rejected by SMTP server",
-          info,
-        });
+      return res.status(502).json({
+        success: false,
+        message: "Recipient rejected by SMTP server",
+        info,
+      });
     }
 
     return res.json({ success: true, message: "Invoice sent!", info });
   } catch (err) {
     console.error("Mail error:", err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to send invoice",
-        error: err.message || err,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send invoice",
+      error: err.message || err,
+    });
   }
 };
 
