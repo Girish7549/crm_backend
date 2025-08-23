@@ -1627,11 +1627,9 @@ const sendEmail = async (req, res) => {
 `;
 
     const mailOptions = {
-      from: `"${process.env.company || "DeemandTv"}" <${
-        process.env.SMTP_USER
-      }>`,
-      to: 'hp.code7@gmail.com', // recipient
-      subject: `Your ${process.env.company || "DeemandTv"} Subscription Invoice`,
+      from: `"${company || "DeemandTv"}" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Your ${company || "DeemandTv"} Subscription Invoice`,
       html,
       headers: {
         // Helps inboxing on Gmail/Yahoo/Outlook
