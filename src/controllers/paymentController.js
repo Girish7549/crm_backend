@@ -6,7 +6,7 @@ const Customer = require("../models/Customer"); // assuming this exists
 
 const createPayment = async (req, res) => {
   try {
-    const { name, email, phone, paymentId } = req.body;
+    const { name, email, phone, paymentId, company, paymentMethod } = req.body;
 
     if (!req.files?.paymentProof?.length) {
       return res.status(400).json({ error: "paymentProof image is required." });
@@ -16,7 +16,7 @@ const createPayment = async (req, res) => {
     if (existingPayment) {
       return res.status(409).json({ error: "Payment ID already exists." });
     }
-    console.log("Email :", email)
+    console.log("Email :", email);
 
     const customer = await Customer.findOne({ email });
     if (!customer) {
@@ -40,15 +40,23 @@ const createPayment = async (req, res) => {
       )
     );
 
-    sale.paymentProof.push(uploadedImageUrls[0]);
+    const proofObjects = uploadedImageUrls.map((url) => ({
+      url,
+      date: new Date(),
+      method: req.body.paymentMethod || "zelle",
+    }));
+
+    sale.paymentProof.push(...proofObjects);
     await sale.save();
 
     const payment = new Payment({
+      company,
       name,
       email,
       phone,
       paymentId,
-      paymentProof: uploadedImageUrls[0],
+      paymentMethod,
+      paymentProof: proofObjects[0].url,
     });
     await payment.save();
 
@@ -141,4 +149,9 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
   });
 };
 
-module.exports = { createPayment, getPaymentById, getPayments, deletePaymentById };
+module.exports = {
+  createPayment,
+  getPaymentById,
+  getPayments,
+  deletePaymentById,
+};
