@@ -48,15 +48,6 @@
 
 // module.exports = { login };
 
-
-
-
-
-
-
-
-
-
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -66,7 +57,7 @@ const OFFICE_LNG = 77.3186998;
 const OFFICE_RADIUS_METERS = 10;
 
 const isWithinRadius = (lat1, lon1, lat2, lon2, radiusMeters) => {
-  const toRad = deg => (deg * Math.PI) / 180;
+  const toRad = (deg) => (deg * Math.PI) / 180;
   const R = 6371000;
 
   const dLat = toRad(lat2 - lat1);
@@ -84,6 +75,40 @@ const isWithinRadius = (lat1, lon1, lat2, lon2, radiusMeters) => {
 const login = async (req, res) => {
   try {
     const { email, password, location } = req.body;
+
+    function normalizeIP(ip) {
+      if (!ip) return "";
+      ip = String(ip).trim();
+      ip = ip.replace(/^::ffff:/, ""); // IPv4-mapped IPv6
+      ip = ip.split("%")[0]; // remove zone index like fe80::1%25en0
+      return ip;
+    }
+
+    function getClientIP(req) {
+      // Prefer standard proxy/cdn headers
+      if (req.headers["cf-connecting-ip"])
+        return normalizeIP(req.headers["cf-connecting-ip"]);
+      if (req.headers["x-real-ip"])
+        return normalizeIP(req.headers["x-real-ip"]);
+      const xff = req.headers["x-forwarded-for"];
+      if (xff) {
+        const parts = xff
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+        if (parts.length) return normalizeIP(parts[0]); // left-most is original client
+      }
+      if (req.ip) return normalizeIP(req.ip);
+      // fallback
+      const remote =
+        (req.connection && req.connection.remoteAddress) ||
+        (req.socket && req.socket.remoteAddress) ||
+        "";
+      return normalizeIP(remote);
+    }
+
+    const clientIP = getClientIP(req);
+    console.log("IP ADDRESS LOGIN DEVICE :", clientIP);
 
     const user = await User.findOne({ email }).populate({
       path: "assignedService",
@@ -114,7 +139,7 @@ const login = async (req, res) => {
       //   });
       // }
     }
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -143,9 +168,10 @@ const login = async (req, res) => {
         token,
         role: user.role,
         id: user._id,
+        clientIP: clientIP,
         service: user.assignedService,
         trialCount: user.trialCount,
-        teamId: user.team
+        teamId: user.team,
       },
     });
   } catch (err) {
