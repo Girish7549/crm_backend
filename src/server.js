@@ -111,7 +111,6 @@ io.on("connection", (socket) => {
         select: "name",
       },
     });
-    clg
     const employee = await User.findById(
       support.sale.assignedEmployee
     ).populate({
@@ -159,6 +158,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 app.options("*", cors());
+app.set("trust proxy", true);
 app.use("/api", userRoutes);
 
 // Cloudinary

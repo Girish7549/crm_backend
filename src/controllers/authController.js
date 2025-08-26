@@ -85,26 +85,11 @@ const login = async (req, res) => {
     }
 
     function getClientIP(req) {
-      // Prefer standard proxy/cdn headers
-      if (req.headers["cf-connecting-ip"])
-        return normalizeIP(req.headers["cf-connecting-ip"]);
-      if (req.headers["x-real-ip"])
-        return normalizeIP(req.headers["x-real-ip"]);
       const xff = req.headers["x-forwarded-for"];
       if (xff) {
-        const parts = xff
-          .split(",")
-          .map((p) => p.trim())
-          .filter(Boolean);
-        if (parts.length) return normalizeIP(parts[0]); // left-most is original client
+        return xff.split(",")[0].trim(); // original client IP
       }
-      if (req.ip) return normalizeIP(req.ip);
-      // fallback
-      const remote =
-        (req.connection && req.connection.remoteAddress) ||
-        (req.socket && req.socket.remoteAddress) ||
-        "";
-      return normalizeIP(remote);
+      return req.ip;
     }
 
     const clientIP = getClientIP(req);
