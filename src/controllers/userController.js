@@ -116,7 +116,7 @@ const getUser = async (req, res) => {
     });
   }
 };
-const updateUser = async (req, res) => {
+const updateUser1 = async (req, res) => {
   try {
     const userId = req.params.id;
     const updateData = req.body;
@@ -150,6 +150,42 @@ const updateUser = async (req, res) => {
     });
   }
 };
+const updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updateData = { ...req.body };
+
+    // Only hash password if it's provided
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: updatedUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 const deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
