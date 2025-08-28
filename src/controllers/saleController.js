@@ -1484,7 +1484,8 @@ const sendEmailOLD = async (req, res) => {
 
 const sendEmail = async (req, res) => {
   try {
-    const { name, email, company, plan, month, amount, invoiceNumber,  } = req.body;
+    const { name, email, company, plan, month, amount, status, invoiceNumber } =
+      req.body;
     const file = req.file;
 
     if (!email || !company || !file) {
@@ -1514,27 +1515,167 @@ const sendEmail = async (req, res) => {
         verifyErr && verifyErr.message ? verifyErr.message : verifyErr
       );
     }
-    const html = `
-<!-- Preheader (hidden preview text) -->
+
+    let durationCell = "";
+    if (month <= 18) {
+      durationCell = `
+    <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">
+      ${month} month(s)
+    </td>
+  `;
+    }
+    let html;
+
+    if (status === "done") {
+      html = `
+   <!-- Preheader (hidden preview text) -->
+   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+     Your ${company} subscription invoice — ${invoiceNumber}
+   </div>
+   
+   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;padding:24px 0;">
+     <tr>
+       <td align="center">
+         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #eaeaf1;">
+           <!-- Header -->
+           <tr>
+             <td style="background:#111827;padding:20px 24px;">
+               <table role="presentation" width="100%">
+                 <tr>
+                   <td align="left" style="vertical-align:middle;">
+                     <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company} logo" width="140" style="display:block;max-width:140px;height:auto;border:0;outline:none;text-decoration:none;">
+                   </td>
+                   <td align="right" style="vertical-align:middle;">
+                     <div style="font:600 14px/1.4 Arial,Helvetica,sans-serif;color:#e5e7eb;">Invoice •</div>
+                     <div style="font:400 12px/1.4 Arial,Helvetica,sans-serif;color:#9ca3af;">      ${invoiceNumber}</div>
+                   </td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+   
+           <!-- Greeting -->
+           <tr>
+             <td style="padding:28px 24px 8px 24px;">
+               <div style="font:700 20px/1.3 Arial,Helvetica,sans-serif;color:#111827;">Dear ${name},</div>
+               <div style="height:8px;"></div>
+               <div style="font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#374151;">
+                 Thank you for choosing <strong>${company.slice(
+                   0,
+                   -2
+                 )}</strong>. Below are your subscription details and invoice summary.
+               </div>
+             </td>
+           </tr>
+   
+           <!-- Plan Details -->
+           <tr>
+             <td style="padding:12px 24px;">
+               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #eaeaf1;border-radius:10px;overflow:hidden;">
+                 <tr>
+                   <td colspan="2" style="background:#f3f4f6;padding:12px 16px;font:600 14px Arial,Helvetica,sans-serif;color:#111827;">Subscription Details</td>
+                 </tr>
+                 <tr>
+                   <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;width:40%;">Plan</td>
+                   <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">${plan}</td>
+                 </tr>
+                 <tr style="background:#fafafa;">
+                   <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;">Duration</td>
+                    ${durationCell}
+                 </tr>
+                 <tr>
+                   <td style="padding:12px 16px;font:700 13px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">Total Amount</td>
+                   <td style="padding:12px 16px;font:700 16px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">${amount}</td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+   
+           <!-- CTA -->
+           <tr>
+             <td style="padding:8px 24px 4px 24px;">
+              
+               <div style="clear:both;height:10px;"></div>
+               <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#6b7280;">
+                 Your invoice is also attached for your records. If you have any questions about your subscription, we’re happy to help.
+               </div>
+             </td>
+           </tr>
+   
+           <!-- Extra touch -->
+           <tr>
+             <td style="padding:8px 24px 20px 24px;">
+               <div style="background:#f9fafb;border:1px solid #eef0f4;border-radius:10px;padding:12px 14px;">
+                 <div style="font:600 13px Arial,Helvetica,sans-serif;color:#111827;margin-bottom:4px;">A little extra from us</div>
+                 <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#4b5563;">
+                   We’re constantly enhancing your experience with fresh, high-quality digital entertainment. 
+                   Thank you for being part of ${company}.
+                 </div>
+               </div>
+             </td>
+           </tr>
+   
+           <!-- Footer -->
+           <tr>
+             <td style="background:#111827;color:#d1d5db;padding:14px 24px;">
+               <table role="presentation" width="100%">
+                 <tr>
+                   <td align="left" style="font:400 12px Arial,Helvetica,sans-serif;">
+                     © ${new Date().getFullYear()} ${company.slice(
+        0,
+        -2
+      )}. All rights reserved.
+                   </td>
+                   <td align="right" style="font:400 12px Arial,Helvetica,sans-serif;">
+                     <a href="mailto:${
+                       process.env.SMTP_USER
+                     }" style="color:#d1d5db;text-decoration:none;">${
+        process.env.SMTP_USER
+      }</a> &nbsp;|&nbsp; 
+                   </td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+   
+         </table>
+         <div style="height:24px;"></div>
+         <!-- Unsubscribe (helps deliverability) -->
+         <div style="font:400 11px Arial,Helvetica,sans-serif;color:#6b7280;">
+           To manage notifications, reply to this email or visit your account settings.
+         </div>
+       </td>
+     </tr>
+   </table>
+   `;
+    } else {
+      // ❌ Pending Invoice Template (spam safe)
+      html = `
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-  Your ${company} subscription invoice — ${invoiceNumber}
+  Reminder: Your ${company.slice(
+    0,
+    -2
+  )} invoice ${invoiceNumber} is awaiting payment
 </div>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;padding:24px 0;">
   <tr>
     <td align="center">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #eaeaf1;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="background:#ffffff;border:1px solid #eaeaf1;border-radius:12px;overflow:hidden;">
+        
         <!-- Header -->
         <tr>
           <td style="background:#111827;padding:20px 24px;">
-            <table role="presentation" width="100%">
+            <table width="100%">
               <tr>
-                <td align="left" style="vertical-align:middle;">
-                  <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company} logo" width="140" style="display:block;max-width:140px;height:auto;border:0;outline:none;text-decoration:none;">
+                <td align="left">
+                  <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company.slice(
+                    0,
+                    -2
+                  )} logo" width="140" style="display:block;">
                 </td>
-                <td align="right" style="vertical-align:middle;">
-                  <div style="font:600 14px/1.4 Arial,Helvetica,sans-serif;color:#e5e7eb;">${company}</div>
-                  <div style="font:400 12px/1.4 Arial,Helvetica,sans-serif;color:#9ca3af;">Invoice • ${invoiceNumber}</div>
+                <td align="right" style="color:#e5e7eb;font:600 14px Arial;">
+                  Invoice • ${invoiceNumber}
                 </td>
               </tr>
             </table>
@@ -1544,32 +1685,34 @@ const sendEmail = async (req, res) => {
         <!-- Greeting -->
         <tr>
           <td style="padding:28px 24px 8px 24px;">
-            <div style="font:700 20px/1.3 Arial,Helvetica,sans-serif;color:#111827;">Dear ${name},</div>
-            <div style="height:8px;"></div>
-            <div style="font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#374151;">
-              Thank you for choosing <strong>${company}</strong>. Below are your subscription details and invoice summary.
+            <div style="font:700 20px Arial;color:#111827;">Dear ${name},</div>
+            <div style="margin-top:8px;font:400 14px Arial;color:#374151;">
+              This is a friendly reminder that your subscription with <b>${company.slice(
+                0,
+                -2
+              )}</b> has a pending invoice. Please complete your payment to activate your service.
             </div>
           </td>
         </tr>
 
-        <!-- Plan Details -->
+        <!-- Invoice Table -->
         <tr>
           <td style="padding:12px 24px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #eaeaf1;border-radius:10px;overflow:hidden;">
+            <table width="100%" style="border:1px solid #eaeaf1;border-radius:10px;">
               <tr>
-                <td colspan="2" style="background:#f3f4f6;padding:12px 16px;font:600 14px Arial,Helvetica,sans-serif;color:#111827;">Subscription Details</td>
+                <td colspan="2" style="background:#f9fafb;padding:12px;font:600 14px Arial;color:#111827;">Invoice Summary</td>
               </tr>
               <tr>
-                <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;width:40%;">Plan</td>
-                <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">${plan}</td>
+                <td style="padding:10px 16px;">Plan</td>
+                <td style="padding:10px 16px;font-weight:600;">${plan}</td>
               </tr>
               <tr style="background:#fafafa;">
-                <td style="padding:10px 16px;font:400 13px Arial,Helvetica,sans-serif;color:#4b5563;">Duration</td>
-                <td style="padding:10px 16px;font:600 13px Arial,Helvetica,sans-serif;color:#111827;">${month} month(s)</td>
+                <td style="padding:10px 16px;">Duration</td>
+                <td style="padding:10px 16px;font-weight:600;">${month} month(s)</td>
               </tr>
               <tr>
-                <td style="padding:12px 16px;font:700 13px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">Total Amount</td>
-                <td style="padding:12px 16px;font:700 16px Arial,Helvetica,sans-serif;color:#111827;border-top:1px solid #eaeaf1;">${amount}</td>
+                <td style="padding:12px 16px;font-weight:700;border-top:1px solid #eaeaf1;">Total Due</td>
+                <td style="padding:12px 16px;font-weight:700;border-top:1px solid #eaeaf1;color:#111827;">${amount}</td>
               </tr>
             </table>
           </td>
@@ -1577,59 +1720,34 @@ const sendEmail = async (req, res) => {
 
         <!-- CTA -->
         <tr>
-          <td style="padding:8px 24px 4px 24px;">
-           
-            <div style="clear:both;height:10px;"></div>
-            <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#6b7280;">
-              Your invoice is also attached for your records. If you have any questions about your subscription, we’re happy to help.
-            </div>
-          </td>
-        </tr>
-
-        <!-- Extra touch -->
-        <tr>
-          <td style="padding:8px 24px 20px 24px;">
-            <div style="background:#f9fafb;border:1px solid #eef0f4;border-radius:10px;padding:12px 14px;">
-              <div style="font:600 13px Arial,Helvetica,sans-serif;color:#111827;margin-bottom:4px;">A little extra from us</div>
-              <div style="font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#4b5563;">
-                We’re constantly enhancing your experience with fresh, high-quality digital entertainment. 
-                Thank you for being part of ${company}.
-              </div>
-            </div>
+          <td style="padding:20px 24px;text-align:center;">
+            <a href="https://payment.deemandtv.com" style="background:#2563eb;color:#fff;padding:10px 20px;font:600 14px Arial;border-radius:6px;text-decoration:none;">
+              Pay Now
+            </a>
           </td>
         </tr>
 
         <!-- Footer -->
         <tr>
-          <td style="background:#111827;color:#d1d5db;padding:14px 24px;">
-            <table role="presentation" width="100%">
-              <tr>
-                <td align="left" style="font:400 12px Arial,Helvetica,sans-serif;">
-                  © ${new Date().getFullYear()} ${company}. All rights reserved.
-                </td>
-                <td align="right" style="font:400 12px Arial,Helvetica,sans-serif;">
-                  <a href="mailto:${process.env.SMTP_USER}" style="color:#d1d5db;text-decoration:none;">${process.env.SMTP_USER}</a> &nbsp;|&nbsp; 
-                </td>
-              </tr>
-            </table>
+          <td style="background:#f9fafb;color:#6b7280;padding:14px 24px;font:12px Arial;">
+            If you already made the payment, please ignore this message.
           </td>
         </tr>
 
       </table>
-      <div style="height:24px;"></div>
-      <!-- Unsubscribe (helps deliverability) -->
-      <div style="font:400 11px Arial,Helvetica,sans-serif;color:#6b7280;">
-        To manage notifications, reply to this email or visit your account settings.
-      </div>
     </td>
   </tr>
 </table>
 `;
+    }
 
     const mailOptions = {
       from: `"${company || "DeemandTv"}" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: `Your ${company || "DeemandTv"} Subscription Invoice`,
+      subject:
+        status === "done"
+          ? `Your ${company} Subscription Invoice`
+          : `Invoice from ${company}`,
       html,
       headers: {
         // Helps inboxing on Gmail/Yahoo/Outlook
