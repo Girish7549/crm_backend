@@ -1652,7 +1652,7 @@ const sendEmail = async (req, res) => {
       // ❌ Pending Invoice Template (spam safe)
       html = `
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-  Reminder: Your ${company.slice(
+  Notice: Your ${company.slice(
     0,
     -2
   )} invoice ${invoiceNumber} is awaiting payment
@@ -1722,7 +1722,7 @@ const sendEmail = async (req, res) => {
         <tr>
           <td style="padding:20px 24px;text-align:center;">
             <a href="https://payment.deemandtv.com" style="background:#2563eb;color:#fff;padding:10px 20px;font:600 14px Arial;border-radius:6px;text-decoration:none;">
-              Pay Now
+              Complete Payment
             </a>
           </td>
         </tr>
@@ -1742,12 +1742,13 @@ const sendEmail = async (req, res) => {
     }
 
     const mailOptions = {
-      from: `"${company || "DeemandTv"}" <${process.env.SMTP_USER}>`,
+      from: `"${plan || "DeemandTv"}" <${process.env.SMTP_USER}>`,
       to: email,
       subject:
         status === "done"
           ? `Your ${company} Subscription Invoice`
-          : `Invoice from ${company}`,
+          // : `Invoice from ${company}`,
+          : `Your ${company} Subscription Invoice`,
       html,
       headers: {
         // Helps inboxing on Gmail/Yahoo/Outlook
