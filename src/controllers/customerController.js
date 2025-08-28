@@ -4,9 +4,22 @@ const FollowUp = require("../models/FollowUp");
 
 const createCustomer = async (req, res) => {
   try {
-    const { name, email, phone, whatsapp, address, purchasedService, createdBy } = req.body;
-    const isExist = await Customer.findOne({ email, purchasedService }).populate("createdBy").populate("purchasedService");
-    const isExistInFollowUps = await FollowUp.findOne({ email: email, phone: phone }).populate("salesPerson");
+    const {
+      name,
+      email,
+      phone,
+      whatsapp,
+      address,
+      purchasedService,
+      createdBy,
+    } = req.body;
+    const isExist = await Customer.findOne({ email, purchasedService })
+      .populate("createdBy")
+      .populate("purchasedService");
+    const isExistInFollowUps = await FollowUp.findOne({
+      email: email,
+      phone: phone,
+    }).populate("salesPerson");
 
     console.log("EXIST CUSTOMER :", isExist);
     console.log("purchasedService :", purchasedService);
@@ -14,20 +27,25 @@ const createCustomer = async (req, res) => {
     if (isExist && purchasedService !== isExist.purchasedService.toString()) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist11111",
+        message: "Customer Already Exist",
         data: isExist,
       });
     }
     console.log("CREATED BY :", createdBy);
-    console.log("Follow ups saleperson BY :", isExistInFollowUps?.salesPerson._id?.toString());
+    console.log(
+      "Follow ups saleperson BY :",
+      isExistInFollowUps?.salesPerson._id?.toString()
+    );
 
     if (
       isExistInFollowUps &&
-      createdBy !== isExistInFollowUps?.salesPerson._id?.toString() && purchasedService !== isExistInFollowUps?.salesPerson.assignedService.toString()
+      createdBy !== isExistInFollowUps?.salesPerson._id?.toString() &&
+      purchasedService !==
+        isExistInFollowUps?.salesPerson.assignedService.toString()
     ) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist22222",
+        message: "Follow-Ups Already Exist",
         data: isExistInFollowUps,
       });
     }
@@ -37,7 +55,7 @@ const createCustomer = async (req, res) => {
         ? name.slice(0, 3) + phone.slice(5, 10)
         : name.slice(0, 4) + phone.slice(6, 10)
     }`.toUpperCase();
-    console.log("tin goooo")
+    console.log("tin goooo");
 
     const newCustomer = new Customer({
       name,
@@ -77,7 +95,10 @@ const createRefferedCustomer = async (req, res) => {
       createdBy,
     } = req.body;
     const isExist = await Customer.findOne({ email, purchasedService });
-    const isExistInFollowUps = await FollowUp.findOne({ email: email, phone: phone }).populate("salesPerson");
+    const isExistInFollowUps = await FollowUp.findOne({
+      email: email,
+      phone: phone,
+    }).populate("salesPerson");
 
     if (isExist) {
       return res.status(400).json({
@@ -88,7 +109,9 @@ const createRefferedCustomer = async (req, res) => {
 
     if (
       isExistInFollowUps &&
-      createdBy !== isExistInFollowUps?.salesPerson._id?.toString() && purchasedService !== isExistInFollowUps?.salesPerson.assignedService.toString()
+      createdBy !== isExistInFollowUps?.salesPerson._id?.toString() &&
+      purchasedService !==
+        isExistInFollowUps?.salesPerson.assignedService.toString()
     ) {
       return res.status(400).json({
         success: false,
@@ -309,6 +332,22 @@ const updateCustomer = async (req, res) => {
   try {
     const customerId = req.params.id;
     const updateData = req.body;
+    const email = req.body.email
+    const phone = req.body.phone
+    const purchasedService = req.body.purchasedService
+    console.log("UPDATING DATA :", updateData);
+    const isExist = await Customer.findOne({ email, purchasedService }).populate("createdBy").populate("purchasedService");
+
+    console.log("EXIST CUSTOMER :", isExist);
+    console.log("purchasedService :", purchasedService);
+
+    if (isExist && purchasedService !== isExist.purchasedService.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer Already Exist",
+        data: isExist,
+      });
+    }
     const customer = await Customer.findByIdAndUpdate(customerId, updateData, {
       new: true,
       runValidators: true,
