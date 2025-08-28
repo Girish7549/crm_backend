@@ -328,15 +328,17 @@ const searchCustomer = async (req, res) => {
   }
 };
 
-const updateCustomer = async (req, res) => {
+const updateCustomer1 = async (req, res) => {
   try {
     const customerId = req.params.id;
     const updateData = req.body;
-    const email = req.body.email
-    const phone = req.body.phone
-    const purchasedService = req.body.purchasedService
+    const email = req.body.email;
+    const phone = req.body.phone;
+    const purchasedService = req.body.purchasedService;
     console.log("UPDATING DATA :", updateData);
-    const isExist = await Customer.findOne({ email, purchasedService }).populate("createdBy").populate("purchasedService");
+    const isExist = await Customer.findOne({ email, purchasedService })
+      .populate("createdBy")
+      .populate("purchasedService");
 
     console.log("EXIST CUSTOMER :", isExist);
     console.log("purchasedService :", purchasedService);
@@ -359,6 +361,67 @@ const updateCustomer = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const updateCustomer = async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const updateData = req.body;
+    const { email, purchasedService } = updateData;
+
+    console.log("UPDATING DATA:", updateData);
+
+    // ✅ Check if another customer (not this one) already has same email + service
+    const isExist = await Customer.findOne({
+      email,
+      purchasedService,
+      _id: { $ne: customerId }, // exclude current customer from duplicate check
+    })
+      .populate("createdBy")
+      .populate("purchasedService");
+
+    if (isExist) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer with this email and service already exists",
+        data: isExist,
+      });
+    }
+
+    // ✅ Now update safely
+    const customer = await Customer.findByIdAndUpdate(customerId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Customer updated successfully",
+      data: customer,
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+
+    // ✅ Handle duplicate key error from MongoDB
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate value error (email must be unique)",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
