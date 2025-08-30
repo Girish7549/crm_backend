@@ -195,6 +195,7 @@ const login = async (req, res) => {
       path: "assignedService",
       select: "_id name description",
     });
+    
     console.log("User data :", user);
     if (!user) {
       return res.status(404).json({

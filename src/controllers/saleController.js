@@ -1652,30 +1652,24 @@ const sendEmail = async (req, res) => {
       // ❌ Pending Invoice Template (spam safe)
       html = `
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-  Notice: Your ${company.slice(
-    0,
-    -2
-  )} invoice ${invoiceNumber} is awaiting payment
+  Invoice ${invoiceNumber} from ${company}
 </div>
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;padding:24px 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F6F7FB; padding:24px 0;">
   <tr>
     <td align="center">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="background:#ffffff;border:1px solid #eaeaf1;border-radius:12px;overflow:hidden;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:100%; background:#FFFFFF; border:1px solid #EAEAF1; border-radius:12px; overflow:hidden;">
         
         <!-- Header -->
         <tr>
-          <td style="background:#111827;padding:20px 24px;">
+          <td style="background:#111827; padding:20px 24px;">
             <table width="100%">
               <tr>
                 <td align="left">
-                  <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company.slice(
-                    0,
-                    -2
-                  )} logo" width="140" style="display:block;">
+                  <img src="https://res.cloudinary.com/dxziqnbub/image/upload/v1755938518/deemanTv_logo-removebg-preview_tdutzp.png" alt="${company} logo" width="140" style="display:block;">
                 </td>
-                <td align="right" style="color:#e5e7eb;font:600 14px Arial;">
-                  Invoice • ${invoiceNumber}
+                <td align="right" style="color:#E5E7EB; font-family:Arial, sans-serif; font-size:14px; font-weight:600;">
+                  Invoice #${invoiceNumber}
                 </td>
               </tr>
             </table>
@@ -1685,12 +1679,9 @@ const sendEmail = async (req, res) => {
         <!-- Greeting -->
         <tr>
           <td style="padding:28px 24px 8px 24px;">
-            <div style="font:700 20px Arial;color:#111827;">Dear ${name},</div>
-            <div style="margin-top:8px;font:400 14px Arial;color:#374151;">
-              This is a friendly reminder that your subscription with <b>${company.slice(
-                0,
-                -2
-              )}</b> has a pending invoice. Please complete your payment to activate your service.
+            <div style="font-family:Arial, sans-serif; font-weight:700; font-size:20px; color:#111827;">Dear ${name},</div>
+            <div style="margin-top:8px; font-family:Arial, sans-serif; font-size:14px; color:#374151;">
+              This is an official invoice for your subscription with <b>${company}</b>. Please complete your payment to continue enjoying uninterrupted service.
             </div>
           </td>
         </tr>
@@ -1698,21 +1689,21 @@ const sendEmail = async (req, res) => {
         <!-- Invoice Table -->
         <tr>
           <td style="padding:12px 24px;">
-            <table width="100%" style="border:1px solid #eaeaf1;border-radius:10px;">
+            <table width="100%" style="border:1px solid #EAEAF1; border-radius:10px;">
               <tr>
-                <td colspan="2" style="background:#f9fafb;padding:12px;font:600 14px Arial;color:#111827;">Invoice Summary</td>
+                <td colspan="2" style="background:#F9FAFB; padding:12px; font-family:Arial, sans-serif; font-size:14px; font-weight:600; color:#111827;">Invoice Summary</td>
               </tr>
               <tr>
-                <td style="padding:10px 16px;">Plan</td>
-                <td style="padding:10px 16px;font-weight:600;">${plan}</td>
+                <td style="padding:10px 16px; font-family:Arial, sans-serif; font-size:14px;">Plan</td>
+                <td style="padding:10px 16px; font-family:Arial, sans-serif; font-size:14px; font-weight:600;">${plan}</td>
               </tr>
-              <tr style="background:#fafafa;">
-                <td style="padding:10px 16px;">Duration</td>
-                <td style="padding:10px 16px;font-weight:600;">${month} month(s)</td>
+              <tr style="background:#FAFAFA;">
+                <td style="padding:10px 16px; font-family:Arial, sans-serif; font-size:14px;">Duration</td>
+                <td style="padding:10px 16px; font-family:Arial, sans-serif; font-size:14px; font-weight:600;">${month} month(s)</td>
               </tr>
               <tr>
-                <td style="padding:12px 16px;font-weight:700;border-top:1px solid #eaeaf1;">Total Due</td>
-                <td style="padding:12px 16px;font-weight:700;border-top:1px solid #eaeaf1;color:#111827;">${amount}</td>
+                <td style="padding:12px 16px; font-family:Arial, sans-serif; font-size:14px; font-weight:700; border-top:1px solid #EAEAF1;">Total Due</td>
+                <td style="padding:12px 16px; font-family:Arial, sans-serif; font-size:14px; font-weight:700; border-top:1px solid #EAEAF1; color:#111827;">${amount}</td>
               </tr>
             </table>
           </td>
@@ -1720,17 +1711,22 @@ const sendEmail = async (req, res) => {
 
         <!-- CTA -->
         <tr>
-          <td style="padding:20px 24px;text-align:center;">
-            <a href="https://payment.deemandtv.com" style="background:#2563eb;color:#fff;padding:10px 20px;font:600 14px Arial;border-radius:6px;text-decoration:none;">
-              Complete Payment
+          <td style="padding:20px 24px; text-align:center;">
+            <a href="https://payment.deemandtv.com" style="background:#2563EB; color:#FFFFFF; padding:10px 20px; font-family:Arial, sans-serif; font-size:14px; font-weight:600; border-radius:6px; text-decoration:none; display:inline-block;">
+              Pay Securely Online
             </a>
           </td>
         </tr>
 
         <!-- Footer -->
         <tr>
-          <td style="background:#f9fafb;color:#6b7280;padding:14px 24px;font:12px Arial;">
-            If you already made the payment, please ignore this message.
+          <td style="background:#F9FAFB; color:#6B7280; padding:16px 24px; font-family:Arial, sans-serif; font-size:12px; line-height:18px;">
+            This invoice was issued by <b>${company}</b>.  
+            If you have already completed the payment, please disregard this notice.  
+            <br><br>
+            <b>Support:</b> <a href="mailto:support@deemandtv.com" style="color:#2563EB; text-decoration:none;">support@deemandtv.com</a> 
+            <br><br>
+            © ${new Date().getFullYear()} ${company}. All rights reserved.
           </td>
         </tr>
 
@@ -1738,6 +1734,7 @@ const sendEmail = async (req, res) => {
     </td>
   </tr>
 </table>
+
 `;
     }
 
