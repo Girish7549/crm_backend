@@ -195,7 +195,7 @@ const login = async (req, res) => {
       path: "assignedService",
       select: "_id name description",
     });
-    
+
     console.log("User data :", user);
     if (!user) {
       return res.status(404).json({
@@ -265,6 +265,16 @@ const login = async (req, res) => {
         message: "Invalid credentials.",
       });
     }
+    // ✅ Update user online status
+    user.isOnline = true;
+    user.lastSeen = new Date();
+    await user.save();
+
+    // ✅ Emit socket event for admin dashboards
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("employeeStatus", { userId: user._id, isOnline: true });
+    }
 
     // Sign JWT token
     const token = jwt.sign(
@@ -285,6 +295,7 @@ const login = async (req, res) => {
         service: user.assignedService,
         trialCount: user.trialCount,
         teamId: user.team,
+        isOnline: true,
       },
     });
   } catch (err) {

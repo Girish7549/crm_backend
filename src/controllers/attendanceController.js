@@ -6,7 +6,7 @@ const User = require("../models/User");
 const createAttendence = async (req, res) => {
   const { userId, loginTime, logoutTime, durationSeconds } = req.body;
 
-  if ( !userId || !loginTime || !logoutTime || typeof durationSeconds !== "number" ) {
+  if (!userId || !loginTime || !logoutTime || typeof durationSeconds !== "number") {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
@@ -23,6 +23,12 @@ const createAttendence = async (req, res) => {
     if (existingRecord) {
       await Attendance.deleteOne({ _id: existingRecord._id });
     }
+
+    // 🔹 Mark user offline here
+    await User.findByIdAndUpdate(userId, {
+      isOnline: false,
+      lastSeen: new Date()
+    });
 
     const userInfo = await User.findById(userId);
     if (userInfo.role === "admin") return;

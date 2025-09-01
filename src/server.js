@@ -1,3 +1,4 @@
+// server.js (CommonJS)
 const express = require("express");
 const connectDB = require("./config/database");
 const cloudinary = require("cloudinary").v2;
@@ -6,11 +7,15 @@ const cors = require("cors");
 const startCronJobs = require("./cron");
 const http = require("http");
 const { Server } = require("socket.io");
+
+// Models
 const Message = require("./models/Message");
 const PersonalMessage = require("./models/PersonalMessage");
 const Sales = require("./models/Sales");
 const SaleActivation = require("./models/SaleActivation");
 const Customer = require("./models/Customer");
+const User = require("./models/User");
+
 require("dotenv").config();
 
 const app = express();
@@ -18,39 +23,56 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "*", // or set your frontend origin for security
     methods: ["GET", "POST"],
   },
 });
+
+// Make io available to routes if needed
 app.set("io", io);
 
+// ============== SINGLE Socket.IO connection handler ==============
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Join personal room
-  socket.on("joinRoom", ({ userId }) => {
-    socket.join(userId); // personal room for private chats
+  // --------- Online/Offline tracking ----------
+  socket.on("employeeLogin", async (userId) => {
+    try {
+      socket.userId = userId; // bind user to this socket
+      await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+        lastSeen: new Date(),
+      });
+      io.emit("employeeStatus", { userId, isOnline: true });
+    } catch (err) {
+      console.error("employeeLogin error:", err);
+    }
   });
 
-  // Global chat
-  socket.on("chatMessage", async (data) => {
-    const { sender, content } = data;
+  // --------- Rooms for private chat -----------
+  socket.on("joinRoom", ({ userId }) => {
+    try {
+      socket.join(userId); // personal room
+    } catch (err) {
+      console.error("joinRoom error:", err);
+    }
+  });
 
+  // --------- Global chat ----------------------
+  socket.on("chatMessage", async (data) => {
+    const { sender, content } = data || {};
     try {
       const newMsg = await Message.create({ sender, content });
-
       const populatedMsg = await newMsg.populate("sender", "name");
-
-      io.emit("chatMessage", populatedMsg); // Global chat
+      io.emit("chatMessage", populatedMsg);
     } catch (error) {
       console.error("Error saving message:", error);
     }
   });
 
-  // Private chat
+  // --------- Private chat ---------------------
   socket.on("privateMessage", async (data) => {
-    const { sender, receiver, message, team } = data;
-
+    const { sender, receiver, message, team } = data || {};
     try {
       const savedMsg = await PersonalMessage.create({
         sender,
@@ -58,86 +80,74 @@ io.on("connection", (socket) => {
         message,
         team,
       });
-
-      // Populate sender before emitting
       const populatedMsg = await savedMsg.populate("sender", "name");
-
-      io.to(receiver).emit("privateMessage", populatedMsg); // Send to receiver
-      socket.emit("privateMessage", populatedMsg); // Echo to sender
+      io.to(receiver).emit("privateMessage", populatedMsg);
+      socket.emit("privateMessage", populatedMsg); // echo to sender
     } catch (err) {
       console.error("Message Save Error:", err);
     }
   });
 
-  // Sale create alert
+  // --------- Sale create alert ----------------
   socket.on("createSale", async (data) => {
-    const { assignedEmployee, saleId } = data;
-    const employee = await Sales.findById(saleId).populate({
-      path: "assignedEmployee",
-      select: "name email role team",
-      populate: {
-        path: "team",
-        select: "name",
-      },
-    });
+    const { saleId } = data || {};
+    try {
+      const employee = await Sales.findById(saleId).populate({
+        path: "assignedEmployee",
+        select: "name email role team",
+        populate: { path: "team", select: "name" },
+      });
 
-    io.emit("new-sale", {
-      message: "A new sale has been created!",
-      saleId,
-      assignedEmployee: employee,
-    });
+      io.emit("new-sale", {
+        message: "A new sale has been created!",
+        saleId,
+        assignedEmployee: employee,
+      });
+    } catch (err) {
+      console.error("createSale error:", err);
+    }
   });
 
-  // Sale update alert
-  // socket.on("updateSale", (data) => {
-  //   const { saleId, status, assignedEmployee } = data;
-
-  //   io.emit("sale-updated", {
-  //     message: `Sale updated! Status changed to: ${status}`,
-  //     saleId,
-  //     status,
-  //     assignedEmployee,
-  //   });
-  // });
-
-  // Activation create alert
+  // --------- Activation create alert ----------
   socket.on("createActivation", async (data) => {
-    const { assignedEmployee, activationId } = data;
-    const support = await SaleActivation.findById(activationId).populate({
-      path: "assignedEmployee",
-      select: "name email role team",
-      populate: {
-        path: "team",
-        select: "name",
-      },
-    });
-    const employee = await User.findById(
-      support.sale.assignedEmployee
-    ).populate({
-      path: "assignedEmployee",
-      select: "name email role team",
-      populate: {
-        path: "team",
-        select: "name",
-      },
-    });
-    const customer = await Customer.findById(support.customer).populate("name email phone")
-    console.log("Sale Executive :", employee.name)
-    console.log("Support :", support.name)
+    const { activationId } = data || {};
+    try {
+      const support = await SaleActivation.findById(activationId).populate({
+        path: "assignedEmployee",
+        select: "name email role team",
+        populate: { path: "team", select: "name" },
+      });
 
-    io.emit("new-activation", {
-      message: "A new activation has been created!!!",
-      activationId,
-      support: support,
-      assignedEmployee: employee,
-      customer: customer
-    });
+      // NOTE: If you need sale.assignedEmployee, make sure SaleActivation has `sale` field populated
+      // Here we assume support.sale exists and has assignedEmployee
+      let employee = null;
+      if (support?.sale?.assignedEmployee) {
+        employee = await User.findById(support.sale.assignedEmployee).populate({
+          path: "team",
+          select: "name",
+        });
+      }
+
+      const customer = await Customer.findById(support.customer); // populate({ ...fields }) not valid this way
+
+      console.log("Sale Executive :", employee?.name);
+      console.log("Support :", support?.assignedEmployee?.name);
+
+      io.emit("new-activation", {
+        message: "A new activation has been created!!!",
+        activationId,
+        support,
+        assignedEmployee: employee,
+        customer,
+      });
+    } catch (err) {
+      console.error("createActivation error:", err);
+    }
   });
 
-  // Activation update alert
+  // --------- Activation update alert ----------
   socket.on("updateActivation", (data) => {
-    const { activationId, status, assignedEmployee } = data;
-
+    const { activationId, status, assignedEmployee } = data || {};
     io.emit("activation-updated", {
       message: `Activation updated! Status changed to: ${status}`,
       activationId,
@@ -146,16 +156,29 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+  // --------- Disconnect (mark offline) --------
+  socket.on("disconnect", async () => {
+    try {
+      if (socket.userId) {
+        await User.findByIdAndUpdate(socket.userId, {
+          isOnline: false,
+          lastSeen: new Date(),
+        });
+        io.emit("employeeStatus", {
+          userId: socket.userId,
+          isOnline: false,
+        });
+      }
+      console.log("User disconnected:", socket.id);
+    } catch (err) {
+      console.error("disconnect error:", err);
+    }
   });
 });
 
-app.set("io", io);
-
-// Middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// ================== Middleware & Routes ==================
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
 app.options("*", cors());
 app.set("trust proxy", true);
@@ -168,10 +191,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Connect to DB and start cron jobs
+// DB & Cron
 connectDB();
 startCronJobs();
 
+// Health
 app.get("/", (req, res) => {
   res.status(200).send(`
     <html>
@@ -183,7 +207,7 @@ app.get("/", (req, res) => {
   `);
 });
 
-// Start Server
+// Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server Running at PORT :${PORT}`);
