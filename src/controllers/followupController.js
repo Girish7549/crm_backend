@@ -39,7 +39,7 @@ const createFollowUp_OLD_working = async (req, res) => {
 };
 const createFollowUp = async (req, res) => {
   try {
-    const { email, salesPerson, assignedService, name, phone, address } = req.body;
+    const { email, salesPerson, assignedService, name, phone, address, notes } = req.body;
 
     // 1️⃣ Check if any followups exist for this email
     const existingFollowUps = await FollowUp.find({ email }).populate("salesPerson");
@@ -78,6 +78,7 @@ const createFollowUp = async (req, res) => {
         email,
         phone,
         address,
+        notes,
         salesPerson,
         assignedService,
       });
@@ -96,6 +97,7 @@ const createFollowUp = async (req, res) => {
       email,
       phone,
       address,
+      notes,
       salesPerson,
       assignedService,
     });
