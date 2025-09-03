@@ -204,6 +204,8 @@ const login = async (req, res) => {
       });
     }
 
+    const supportPersonId = await User.findOne({ team: user.team, role:'support', assignedService: user.assignedService }).select('_id name team');
+
     // Decrypt IP sent from frontend
     let clientIP = "";
     if (!user.globalAccess) {
@@ -293,6 +295,7 @@ const login = async (req, res) => {
         id: user._id,
         clientIP, // decrypted IP sent back if you want
         service: user.assignedService,
+        support: supportPersonId,
         trialCount: user.trialCount,
         teamId: user.team,
         isOnline: true,

@@ -19,6 +19,10 @@ const personalMessageSchema = new mongoose.Schema(
     message: {
       type: String,
     },
+    read: {
+      type: Boolean,
+      default: false
+    },
     createdAt: {
       type: Date,
       default: Date.now,

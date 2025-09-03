@@ -24,7 +24,7 @@ const { createTeam, getAllTeams } = require("../controllers/teamController");
 
 const { createActivation, getAllActivations, getActivationById, updateActivation, deleteActivation, getAllSupportActivation, getTeamActivations, addMonthInActivation, getTeamStatusFilterActivations, oldSaleUpdate, searchActivations } = require("../controllers/activationController");
 
-const { getPersonalMessage } = require("../controllers/personalMessageController");
+const { getPersonalMessage, createPersonalMessage, getPersonalChat, getTeamDMs } = require("../controllers/personalMessageController");
 
 const router = express.Router();
 const upload = require("../config/multer");
@@ -109,7 +109,7 @@ router.put(
   ]),
   updateSale
 );
-router.post( "/sale", upload.fields([{ name: "paymentProof", maxCount: 5 },{ name: "voiceProof", maxCount: 1 } ]), createSale );
+router.post("/sale", upload.fields([{ name: "paymentProof", maxCount: 5 }, { name: "voiceProof", maxCount: 1 }]), createSale);
 router.delete("/sale/:id", deleteSale);
 router.get("/sales/search", searchSalesByPhone);
 router.get("/sales/search-all-sale", searchAllSalesByPhone);
@@ -152,7 +152,10 @@ router.post("/chat", createMessage);
 router.delete("/chat/:id", deleteMessage);
 
 // Personal Chat
-router.get("/dm", getPersonalMessage);
+router.get("/personal", getPersonalMessage);   // Admin/debug: get ALL personal messages
+router.get("/personal/:userId/:receiverId", getPersonalChat);  // Get chat between two users (optionally constrain with ?teamId=xxxx)
+router.get("/personal/team/:teamId", getTeamDMs);  // Get all DMs for a team (support inbox)
+router.post("/personal", createPersonalMessage);   // Create a DM (enforces same-team)
 
 // Mac-Address
 router.post("/macAddress", createMacAddress);
@@ -172,7 +175,7 @@ router.get("/adminDashboard", getAdminDashboard);
 router.get("/admin/employee-data/:id", getExecutiveStats);
 
 // Payment
-router.post("/payments", upload.fields([ { name: "paymentProof", maxCount: 2 } ]), createPayment );
+router.post("/payments", upload.fields([{ name: "paymentProof", maxCount: 2 }]), createPayment);
 router.get("/payments", getPayments);
 router.get("/payments/:id", getPaymentById);
 router.delete("/payments/:id", deletePaymentById);

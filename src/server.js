@@ -50,13 +50,23 @@ io.on("connection", (socket) => {
   });
 
   // --------- Rooms for private chat -----------
+  // socket.on("joinRoom", ({ userId }) => {
+  //   try {
+  //     socket.join(userId); // personal room
+  //   } catch (err) {
+  //     console.error("joinRoom error:", err);
+  //   }
+  // });
+  // --------- Rooms for private chat -----------
   socket.on("joinRoom", ({ userId }) => {
     try {
-      socket.join(userId); // personal room
+      socket.join(userId.toString()); // join a room named after the userId
+      console.log(`User ${userId} joined their private room`);
     } catch (err) {
       console.error("joinRoom error:", err);
     }
   });
+
 
   // --------- Global chat ----------------------
   socket.on("chatMessage", async (data) => {
@@ -71,22 +81,32 @@ io.on("connection", (socket) => {
   });
 
   // --------- Private chat ---------------------
-  socket.on("privateMessage", async (data) => {
-    const { sender, receiver, message, team } = data || {};
-    try {
-      const savedMsg = await PersonalMessage.create({
-        sender,
-        receiver,
-        message,
-        team,
-      });
-      const populatedMsg = await savedMsg.populate("sender", "name");
-      io.to(receiver).emit("privateMessage", populatedMsg);
-      socket.emit("privateMessage", populatedMsg); // echo to sender
-    } catch (err) {
-      console.error("Message Save Error:", err);
-    }
-  });
+socket.on("privateMessage", async (data) => {
+  const { sender, receiver, message, team } = data || {};
+  try {
+    const savedMsg = await PersonalMessage.create({
+      sender,
+      receiver,
+      message,
+      team,
+    });
+
+    const populatedMsg = await savedMsg.populate([
+      { path: "sender", select: "name role team" },
+      { path: "receiver", select: "name role team" },
+      { path: "team", select: "name" },
+    ]);
+
+    // ✅ Emit to both sender and receiver rooms
+    io.to(sender.toString()).emit("privateMessage", populatedMsg);
+    io.to(receiver.toString()).emit("privateMessage", populatedMsg);
+
+  } catch (err) {
+    console.error("Message Save Error:", err);
+  }
+});
+
+
 
   // --------- Sale create alert ----------------
   socket.on("createSale", async (data) => {
