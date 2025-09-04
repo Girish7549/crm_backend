@@ -10,7 +10,7 @@ const createAttendence = async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const status = durationSeconds <= 0 ? "absent" : durationSeconds < 32100 ? "half" : "full";
+  const status = durationSeconds <= 0 ? "absent" : durationSeconds < 32400 ? "half" : "full";
 
   try {
     const nineHoursAgo = new Date(Date.now() - 9 * 60 * 60 * 1000);

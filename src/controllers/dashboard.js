@@ -6,8 +6,10 @@ const Trial = require("../models/Trial");
 const FollowUp = require("../models/FollowUp");
 const Callback = require("../models/Callback");
 const Service = require("../models/Service");
-// const Activation = require("../models/Activation");
 const User = require("../models/User");
+const Attendance = require("../models/Attendance");
+// const Activation = require("../models/Activation");
+
 
 const getActivationDashboard = async (req, res) => {
   try {
@@ -53,7 +55,7 @@ const getActivationDashboard = async (req, res) => {
   }
 };
 
-const getSaleDashboard = async (req, res) => {
+const getSaleDashboard_old = async (req, res) => {
   try {
     const empId = req.params.id;
     const all_Sale = await Sales.find({ assignedEmployee: empId });
@@ -110,6 +112,187 @@ const getSaleDashboard = async (req, res) => {
     });
   }
 };
+
+const getSaleDashboard = async (req, res) => {
+  try {
+    const empId = req.params.id;
+
+    // Base data
+    const all_Sale = await Sales.find({ assignedEmployee: empId });
+    const all_Trial = await Trial.find({ assignedEmployee: empId });
+    const all_FollowUps = await FollowUp.find({ salesPerson: empId });
+    const all_Callback = await Callback.find({ createdBy: empId });
+
+    const now = new Date();
+    const currentDate = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // =============================
+    // 1. Monthly Sales & Incentive
+    // =============================
+    const monthly_sale = all_Sale.filter((item) => {
+      const createdAt = new Date(item.createdAt);
+      return (
+        createdAt.getMonth() === currentMonth &&
+        createdAt.getFullYear() === currentYear
+      );
+    });
+
+    const user = await User.findById(empId);
+    const target = user?.target || 20;
+
+    // Example: ₹500 incentive per sale
+    const ratePerSale = 500;
+    const incentive = {
+      current: monthly_sale.length,
+      target,
+      percent: Math.min(
+        100,
+        ((monthly_sale.length / target) * 100).toFixed(0)
+      ),
+      amountEarned: monthly_sale.length * ratePerSale,
+      potentialAmount: target * ratePerSale,
+    };
+
+    // =============================
+    // 2. Pending Payments
+    // =============================
+    const pending_payment = all_Sale
+      .filter((item) => item.status === "pending")
+      .reduce((total, item) => total + (item.totalAmount || 0), 0);
+
+    // =============================
+    // 3. Today’s follow-ups & callbacks
+    // =============================
+    const follow_ups_today = all_FollowUps.length;
+    const callback_today = all_Callback.filter((item) => {
+      const scheduledTime = new Date(item.scheduledTime);
+      return (
+        scheduledTime.getDate() === currentDate &&
+        scheduledTime.getMonth() === currentMonth &&
+        scheduledTime.getFullYear() === currentYear
+      );
+    });
+
+    // =============================
+    // 4. Trial pending
+    // =============================
+    const trial_pending = all_Trial.filter((item) => item.status === "pending");
+
+    // =============================
+    // 5. Performance Data (Weekly Sales)
+    // =============================
+    const weeks = [0, 7, 14, 21, 28]; // date ranges
+    const salesData = weeks.map((start, i) => {
+      const end = start + 7;
+      const count = monthly_sale.filter((s) => {
+        const d = new Date(s.createdAt).getDate();
+        return d > start && d <= end;
+      }).length;
+      return { week: `Week ${i + 1}`, sales: count };
+    });
+
+    // =============================
+    // 6. Monthly Attendance
+    // =============================
+    const attendances = await Attendance.find({
+      userId: empId,
+      loginTime: {
+        $gte: new Date(currentYear, currentMonth, 1),
+        $lt: new Date(currentYear, currentMonth + 1, 1),
+      },
+    });
+
+    let daysPresent = attendances.filter(
+      (a) => a.status === "full" || a.status === "half"
+    ).length;
+    let leaves = attendances.filter((a) => a.status === "absent").length;
+
+    // late login = login after 9:15 am
+    const lateLogins = attendances.filter((a) => {
+      const loginTime = new Date(a.loginTime);
+      return (
+        loginTime.getHours() > 9 ||
+        (loginTime.getHours() === 9 && loginTime.getMinutes() > 15)
+      );
+    }).length;
+
+    const attendanceData = {
+      daysPresent,
+      lateLogins,
+      leaves,
+    };
+
+    // =============================
+    // 7. Top 3 Performers of Month
+    // =============================
+    const monthly_sales_all = await Sales.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(currentYear, currentMonth, 1),
+            $lt: new Date(currentYear, currentMonth + 1, 1),
+          },
+        },
+      },
+      { $group: { _id: "$assignedEmployee", sales: { $sum: 1 } } },
+      { $sort: { sales: -1 } },
+      { $limit: 3 },
+    ]);
+
+    const topPerformers = await Promise.all(
+      monthly_sales_all.map(async (p) => {
+        const performer = await User.findById(p._id);
+        return {
+          name: performer?.name || "Unknown",
+          sales: p.sales,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${performer?.name || "X"}`,
+        };
+      })
+    );
+
+    // Profile Data 
+    const profile = {
+      name: user.name,
+      role: user.role
+    }
+
+    // =============================
+    // Final Response (your original + new)
+    // =============================
+    let responseData = {
+      // original
+      monthly_sale: monthly_sale.length,
+      pending_payment,
+      follow_ups_today,
+      callback_today: callback_today.length,
+      trial_pending: trial_pending.length,
+
+      // new
+      profile,
+      incentive,
+      salesData,
+      attendanceData,
+      topPerformers,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Dashboard Data Retrieved",
+      data: responseData,
+    });
+  } catch (err) {
+    console.error("Internal Server Error !", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error!",
+    });
+  }
+};
+
+module.exports = { getSaleDashboard };
+
 
 const getAdminDashboard_old = async (req, res) => {
   try {

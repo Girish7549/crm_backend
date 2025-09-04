@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema({
     default: 12,
     min: 0,
   },
+  target: {
+    type: Number,
+    default: 20,
+  },
   team: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",
