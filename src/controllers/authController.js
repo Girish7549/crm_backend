@@ -298,6 +298,7 @@ const login = async (req, res) => {
         support: supportPersonId,
         trialCount: user.trialCount,
         teamId: user.team,
+        gender: user.gender,
         isOnline: true,
       },
     });
