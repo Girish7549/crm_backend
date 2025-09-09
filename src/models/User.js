@@ -22,6 +22,11 @@ const UserSchema = new mongoose.Schema({
     enum: ["admin", "activation", "manager", "sales_agent", "support"],
     required: true,
   },
+  gender: {
+    type: String,
+    enum: ["male", "female"],
+    required: true,
+  },
   assignedService: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
