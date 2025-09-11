@@ -22,6 +22,7 @@ const createCustomer = async (req, res) => {
     }).populate("salesPerson");
 
     console.log("EXIST CUSTOMER :", isExist);
+    console.log("isExistInFollowUps :", isExistInFollowUps);
     console.log("purchasedService :", purchasedService);
 
     if (isExist && purchasedService !== isExist.purchasedService.toString()) {
@@ -40,7 +41,8 @@ const createCustomer = async (req, res) => {
     if (
       isExistInFollowUps &&
       createdBy !== isExistInFollowUps?.salesPerson._id?.toString() &&
-      purchasedService !==
+      createdBy === isExistInFollowUps?.salesPerson._id?.toString() &&
+      purchasedService ===
         isExistInFollowUps?.salesPerson.assignedService.toString()
     ) {
       return res.status(400).json({
