@@ -32,10 +32,10 @@ const createCustomer = async (req, res) => {
       });
     }
     console.log("CREATED BY :", createdBy);
-    console.log(
-      "Follow ups saleperson BY :",
-      isExistInFollowUps?.salesPerson._id?.toString()
-    );
+    // console.log(
+    //   "Follow ups saleperson BY :",
+    //   isExistInFollowUps?.salesPerson._id?.toString()
+    // );
 
     if (
       isExistInFollowUps &&
