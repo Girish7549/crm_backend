@@ -40,10 +40,10 @@ const createCustomer = async (req, res) => {
 
     if (
       isExistInFollowUps &&
-      createdBy !== isExistInFollowUps?.salesPerson._id?.toString() &&
-      createdBy === isExistInFollowUps?.salesPerson._id?.toString() &&
+      createdBy !== isExistInFollowUps?.salesPerson?._id?.toString() &&
+      createdBy === isExistInFollowUps?.salesPerson?._id?.toString() &&
       purchasedService ===
-        isExistInFollowUps?.salesPerson.assignedService.toString()
+        isExistInFollowUps?.salesPerson?.assignedService.toString()
     ) {
       return res.status(400).json({
         success: false,
