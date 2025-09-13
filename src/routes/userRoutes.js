@@ -38,6 +38,7 @@ const { createAttendence, getAllAttendence, deleteAttandence } = require("../con
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
+const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updatePaymentMethod, deletePaymentMethod, getPaymentMethodsByCompanyId } = require("../controllers/PaymentMethodController");
 
 // Service Routes
 router.post("/service", createService);
@@ -187,5 +188,13 @@ router.get("/account/:id", getAccountById);
 router.post("/account", upload.fields([{ name: "image", maxCount: 1 }]), createAccount);
 router.put("/account/:id", upload.fields([{ name: "image", maxCount: 1 }]), updateAccount);
 router.delete("/account/:id", deleteAccount);
+
+// Payment Method Controllers
+router.post('/paymentMethod', createPaymentMethod);
+router.get('/paymentMethod', getAllPaymentMethods);
+router.get('/paymentMethod/:id', getPaymentMethodById);
+router.get('/paymentMethod-by-company/:id', getPaymentMethodsByCompanyId);
+router.put('/paymentMethod/:id', updatePaymentMethod);
+router.delete('/paymentMethod/:id', deletePaymentMethod);
 
 module.exports = router;
