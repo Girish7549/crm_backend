@@ -14,25 +14,25 @@ const createPayment = async (req, res) => {
 
     const existingPayment = await Payment.findOne({ paymentId });
     if (existingPayment) {
-      return res.status(409).json({ error: "Payment ID already exists." });
+      return res.status(409).json({ success: false, message: "Payment ID already exists." });
     }
     console.log("Email :", email);
 
-    const customer = await Customer.findOne({ email });
-    if (!customer) {
-      return res.status(404).json({
-        success: false,
-        message: "No customer found with this email.",
-      });
-    }
+    // const customer = await Customer.findOne({ email });
+    // if (!customer) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "No customer found with this email.",
+    //   });
+    // }
 
-    const sale = await Sale.findOne({ customer: customer._id });
-    if (!sale) {
-      return res.status(404).json({
-        success: false,
-        message: "No sale found for this customer.",
-      });
-    }
+    // const sale = await Sale.findOne({ customer: customer._id });
+    // if (!sale) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "No sale found for this customer.",
+    //   });
+    // }
 
     const uploadedImageUrls = await Promise.all(
       req.files.paymentProof.map((file) =>
@@ -46,8 +46,8 @@ const createPayment = async (req, res) => {
       method: req.body.paymentMethod || "zelle",
     }));
 
-    sale.paymentProof.push(...proofObjects);
-    await sale.save();
+    // sale.paymentProof.push(...proofObjects);
+    // await sale.save();
 
     const payment = new Payment({
       company,

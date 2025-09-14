@@ -21,6 +21,7 @@ const { getAllTrials, getTrialsByEmployeeId, updateTrial, createTrial, deleteTri
 const { getMessage, createMessage, deleteMessage } = require("../controllers/messageController");
 
 const { createTeam, getAllTeams } = require("../controllers/teamController");
+const { addIP, getIPById, getIPs, updateIP, deleteIP } = require("../controllers/OfficeIpController");
 
 const { createActivation, getAllActivations, getActivationById, updateActivation, deleteActivation, getAllSupportActivation, getTeamActivations, addMonthInActivation, getTeamStatusFilterActivations, oldSaleUpdate, searchActivations } = require("../controllers/activationController");
 
@@ -39,6 +40,7 @@ const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
 const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updatePaymentMethod, deletePaymentMethod, getPaymentMethodsByCompanyId } = require("../controllers/PaymentMethodController");
+const { createInvoice, getInvoices, getInvoiceById, getInvoicesByCompany, updateInvoice, deleteInvoice } = require("../controllers/InvoiceController");
 
 // Service Routes
 router.post("/service", createService);
@@ -196,5 +198,21 @@ router.get('/paymentMethod/:id', getPaymentMethodById);
 router.get('/paymentMethod-by-company/:id', getPaymentMethodsByCompanyId);
 router.put('/paymentMethod/:id', updatePaymentMethod);
 router.delete('/paymentMethod/:id', deletePaymentMethod);
+
+// Invoice Controller ( Company Name, Email, Logo )
+router.post( "/invoice", upload.fields([{ name: "logo", maxCount: 1 }]), createInvoice);
+router.get('/invoice', getInvoices);
+router.get('/invoice/:id', getInvoiceById);
+router.get('/invoice-by-company/:id', getInvoicesByCompany);
+router.put('/invoice/:id', upload.fields([{ name: "logo", maxCount: 1 }]), updateInvoice);
+router.delete('/invoice/:id', deleteInvoice);
+
+// Office IP ADDRESS 
+router.get("/officeIp", getIPs);
+router.get("/officeIp/:id", getIPById);
+router.post("/officeIp", addIP);
+router.put("/officeIp/:id", updateIP);
+router.delete("/officeIp/:id", deleteIP);
+
 
 module.exports = router;

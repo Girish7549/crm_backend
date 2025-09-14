@@ -44,6 +44,15 @@ const upload = multer({
       }
     }
 
+    // ✅ Handle Image (invoice file uploads)
+    if (file.fieldname === "logo") {
+      if (imageTypes.test(extname) && mimetype.startsWith("image/")) {
+        return cb(null, true);
+      } else {
+        return cb(new Error("Only images files are allowed for invoice."));
+      }
+    }
+
     cb(new Error("Unsupported file field."));
   },
 });

@@ -52,6 +52,7 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const CryptoJS = require("crypto-js");
+const OfficeIP = require("../models/OfficeIP");
 
 const OFFICE_LAT = 28.5939383;
 const OFFICE_LNG = 77.3186998;
@@ -196,7 +197,14 @@ const login = async (req, res) => {
       select: "_id name description",
     });
 
-    console.log("User data :", user);
+    const keys = await OfficeIP.find();
+    if (!keys || keys.length === 0) {
+      throw new Error("No IP Address keys found in DB");
+    }
+
+    const secretKey = keys[0].ip;
+
+    // console.log("User data :", user);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -204,14 +212,16 @@ const login = async (req, res) => {
       });
     }
 
-    const supportPersonId = await User.findOne({ team: user.team, role:'support', assignedService: user.assignedService }).select('_id name team');
+    const supportPersonId = await User.findOne({ team: user.team, role: 'support', assignedService: user.assignedService }).select('_id name team');
 
     // Decrypt IP sent from frontend
     let clientIP = "";
     if (!user.globalAccess) {
       try {
         clientIP = decryptIP(hashed);
-        if (clientIP !== process.env.STATIC_IP) {
+        console.log("DECRYPT KEY :", clientIP)
+        console.log("Office KEY :", secretKey)
+        if (clientIP !== secretKey) {
           return res.status(500).json({
             success: false,
             message: "Login allowed at office location.",
