@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, assignedService, team } = req.body;
+    const { name, email, password, role, assignedService, team , gender} = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("password :", password);
     console.log("hashedPassword :", hashedPassword);
@@ -13,6 +13,7 @@ const createUser = async (req, res) => {
     const newUser = new User({
       name,
       email,
+      gender,
       password: hashedPassword,
       originalPassword: password,
       role,
