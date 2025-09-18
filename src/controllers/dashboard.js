@@ -8,13 +8,15 @@ const Callback = require("../models/Callback");
 const Service = require("../models/Service");
 const User = require("../models/User");
 const Attendance = require("../models/Attendance");
-// const Activation = require("../models/Activation");
 
-
+/* ================================
+   1. Activation Dashboard
+================================= */
 const getActivationDashboard = async (req, res) => {
   try {
     const all_Sale_Activation = await SaleActivation.find();
     const all_Trial_Activation = await TrialActivation.find();
+
     const sale_live_count = all_Sale_Activation.filter(
       (item) => item.status === "active"
     );
@@ -24,6 +26,7 @@ const getActivationDashboard = async (req, res) => {
     const sale_expiredSoon_count = all_Sale_Activation.filter(
       (item) => item.status === "expired-soon"
     );
+
     const trial_live_count = all_Trial_Activation.filter(
       (item) => item.status === "active"
     );
@@ -33,21 +36,21 @@ const getActivationDashboard = async (req, res) => {
     const trial_expiredSoon_count = all_Trial_Activation.filter(
       (item) => item.status === "expired-soon"
     );
-    let responseData = {
-      trial_expiredSoon_count: trial_expiredSoon_count.length,
-      trial_pending_count: trial_pending_count.length,
-      trial_live_count: trial_live_count.length,
-      sale_expiredSoon_count: sale_expiredSoon_count.length,
-      sale_pending_count: sale_pending_count.length,
-      sale_live_count: sale_live_count.length,
-    };
+
     res.status(200).json({
       success: true,
-      message: "Dashboard Data Reterived",
-      data: responseData,
+      message: "Dashboard Data Retrieved",
+      data: {
+        trial_expiredSoon_count: trial_expiredSoon_count.length,
+        trial_pending_count: trial_pending_count.length,
+        trial_live_count: trial_live_count.length,
+        sale_expiredSoon_count: sale_expiredSoon_count.length,
+        sale_pending_count: sale_pending_count.length,
+        sale_live_count: sale_live_count.length,
+      },
     });
   } catch (err) {
-    console.log("Internal Server Error !");
+    console.error("Internal Server Error!", err);
     res.status(500).json({
       success: false,
       message: "Internal Server Error!",
@@ -55,64 +58,9 @@ const getActivationDashboard = async (req, res) => {
   }
 };
 
-const getSaleDashboard_old = async (req, res) => {
-  try {
-    const empId = req.params.id;
-    const all_Sale = await Sales.find({ assignedEmployee: empId });
-    const all_Trial = await Trial.find({ assignedEmployee: empId });
-    const all_FollowUps = await FollowUp.find({ salesPerson: empId });
-    const all_Callback = await Callback.find({ createdBy: empId });
-
-    const now = new Date();
-    const currentDate = now.getDate();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthly_sale = all_Sale.filter((item) => {
-      const createdAt = new Date(item.createdAt);
-      return (
-        createdAt.getMonth() === currentMonth &&
-        createdAt.getFullYear() === currentYear
-      );
-    });
-    const pending_payment = all_Sale
-      .filter((item) => item.status === "pending")
-      .reduce((total, item) => total + (item.totalAmount || 0), 0);
-
-    const follow_ups_today = all_FollowUps.length;
-    const callback_today = all_Callback.filter((item) => {
-      const scheduledTime = new Date(item.scheduledTime);
-      return (
-        scheduledTime.getDate() === currentDate &&
-        scheduledTime.getMonth() === currentMonth &&
-        scheduledTime.getFullYear() === currentYear
-      );
-    });
-    const trial_pending = all_Trial.filter((item) => item.status === "pending");
-    // const trial_expiredSoon_count = all_Trial.filter(
-    //   (item) => item.status === "expired-soon"
-    // );
-    let responseData = {
-      monthly_sale: monthly_sale.length,
-      pending_payment: pending_payment,
-      follow_ups_today: follow_ups_today,
-      callback_today: callback_today.length,
-      trial_pending: trial_pending.length,
-    };
-    res.status(200).json({
-      success: true,
-      message: "Dashboard Data Reterived",
-      data: responseData,
-    });
-  } catch (err) {
-    console.log("Internal Server Error !");
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error!",
-    });
-  }
-};
-
+/* ================================
+   2. Sale Dashboard (with Incentives)
+================================= */
 const getSaleDashboard = async (req, res) => {
   try {
     const empId = req.params.id;
@@ -129,7 +77,7 @@ const getSaleDashboard = async (req, res) => {
     const currentYear = now.getFullYear();
 
     // =============================
-    // 1. Monthly Sales & Incentive
+    // 1. Monthly Sales
     // =============================
     const monthly_sale = all_Sale.filter((item) => {
       const createdAt = new Date(item.createdAt);
@@ -139,31 +87,153 @@ const getSaleDashboard = async (req, res) => {
       );
     });
 
+    // =============================
+    // 2. Profile
+    // =============================
     const user = await User.findById(empId);
-    const target = user?.target || 20;
-
-    // Example: ₹500 incentive per sale
-    const ratePerSale = 500;
-    const incentive = {
-      current: monthly_sale.length,
-      target,
-      percent: Math.min(
-        100,
-        ((monthly_sale.length / target) * 100).toFixed(0)
-      ),
-      amountEarned: monthly_sale.length * ratePerSale,
-      potentialAmount: target * ratePerSale,
+    const profile = {
+      name: user.name,
+      role: user.role,
+      target: user.target
     };
 
     // =============================
-    // 2. Pending Payments
+    // Dollar-Based Incentive
+    // =============================
+    const totalSalesAmount = monthly_sale.reduce(
+      (sum, s) => sum + (s.amount || 0),
+      0
+    );
+
+    function calculateDollarIncentive(total) {
+      if (total >= 10000) return 25000;
+      if (total >= 7000) return 20000;
+      if (total >= 6000) return 15000;
+      if (total >= 5000) return 10000;
+      if (total >= 4500) return 8000;
+      if (total >= 4000) return 6000;
+      if (total >= 3500) return 4000;
+      return 0;
+    }
+    const dollarIncentive = calculateDollarIncentive(totalSalesAmount);
+
+    // =============================
+    // Week Ranges (Tue 9PM → Mon 9AM)
+    // =============================
+    function getCustomWeekRanges(year, month) {
+      const ranges = [];
+      const firstDay = new Date(year, month, 1);
+
+      // find first Tuesday 9:00 PM
+      let firstTuesday = new Date(firstDay);
+      while (firstTuesday.getDay() !== 2) {
+        firstTuesday.setDate(firstTuesday.getDate() + 1);
+      }
+      firstTuesday.setHours(21, 0, 0, 0); // Tuesday 9 PM
+
+      // create 4 week ranges
+      for (let i = 0; i < 4; i++) {
+        const start = new Date(firstTuesday);
+        start.setDate(start.getDate() + i * 7);
+
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6); // move to Monday
+        end.setHours(9, 0, 0, 0); // Monday 9 AM
+
+        ranges.push({ start, end });
+      }
+      return ranges;
+    }
+
+    const ranges = getCustomWeekRanges(currentYear, currentMonth);
+
+    const salesData = ranges.map((range, i) => {
+      const count = monthly_sale.filter((s) => {
+        const d = new Date(s.createdAt);
+        return d >= range.start && d <= range.end;
+      }).length;
+      return { week: `Week ${i + 1}`, sales: count };
+    });
+
+    const weeklySales = salesData.map((w) => w.sales);
+
+    // =============================
+    // Weekly Consistency Incentive
+    // =============================
+    function calculateWeeklyIncentive(weeklySales) {
+      const weeklyTarget = 6;
+      const weeklyBonus = 1000;
+      let totalBonus = 0;
+      let carryForward = 0;
+      const weekDetails = [];
+
+      for (let i = 0; i < weeklySales.length; i++) {
+        let weekSales = weeklySales[i] + carryForward;
+        let bonus = 0;
+
+        // if (weekSales >= weeklyTarget) {
+        //   bonus = weeklyBonus;
+        //   weekSales -= weeklyTarget;
+        //   carryForward = weekSales; // extra carry forward
+        // } else {
+        //   carryForward = weekSales;
+        // }
+
+        if (weekSales >= weeklyTarget) {
+          bonus = weeklyBonus;
+          carryForward = weekSales - weeklyTarget; // keep extra only
+        } else {
+          bonus = 0;
+          carryForward = 0; // reset if target not reached
+        }
+
+        totalBonus += bonus;
+        weekDetails.push({
+          week: `Week ${i + 1}`,
+          sales: weeklySales[i],
+          carryForward,
+          bonus,
+        });
+      }
+      return { totalBonus, weekDetails };
+    }
+
+    const weeklyIncentive = calculateWeeklyIncentive(weeklySales);
+
+    // =============================
+    // Sales Count Incentive
+    // =============================
+    let salesIncentive = 0;
+    let managerBonus = 0;
+    const monthlyCount = monthly_sale.length;
+
+    if (monthlyCount >= 30) {
+      salesIncentive = 10000;
+    } else if (monthlyCount >= 28) {
+      salesIncentive = 8000;
+    } else if (monthlyCount >= 24) {
+      salesIncentive = 4000;
+      // Manager bonus only for exactly 24 + weekly consistency
+      const allWeeksHit = weeklyIncentive.weekDetails.every(
+        (w) => w.bonus > 0
+      );
+      if (allWeeksHit) {
+        managerBonus = 2000;
+        salesIncentive += managerBonus;
+      }
+    } else {
+      salesIncentive = weeklyIncentive.totalBonus; // only weekly incentive
+    }
+
+    // =============================
+    // Pending Payment
     // =============================
     const pending_payment = all_Sale
       .filter((item) => item.status === "pending")
       .reduce((total, item) => total + (item.totalAmount || 0), 0);
 
     // =============================
-    // 3. Today’s follow-ups & callbacks
+    // Today’s follow-ups & callbacks
     // =============================
     const follow_ups_today = all_FollowUps.length;
     const callback_today = all_Callback.filter((item) => {
@@ -176,25 +246,12 @@ const getSaleDashboard = async (req, res) => {
     });
 
     // =============================
-    // 4. Trial pending
+    // Trial pending
     // =============================
     const trial_pending = all_Trial.filter((item) => item.status === "pending");
 
     // =============================
-    // 5. Performance Data (Weekly Sales)
-    // =============================
-    const weeks = [0, 7, 14, 21, 28]; // date ranges
-    const salesData = weeks.map((start, i) => {
-      const end = start + 7;
-      const count = monthly_sale.filter((s) => {
-        const d = new Date(s.createdAt).getDate();
-        return d > start && d <= end;
-      }).length;
-      return { week: `Week ${i + 1}`, sales: count };
-    });
-
-    // =============================
-    // 6. Monthly Attendance
+    // Attendance
     // =============================
     const attendances = await Attendance.find({
       userId: empId,
@@ -209,7 +266,6 @@ const getSaleDashboard = async (req, res) => {
     ).length;
     let leaves = attendances.filter((a) => a.status === "absent").length;
 
-    // late login = login after 9:15 am
     const lateLogins = attendances.filter((a) => {
       const loginTime = new Date(a.loginTime);
       return (
@@ -225,7 +281,7 @@ const getSaleDashboard = async (req, res) => {
     };
 
     // =============================
-    // 7. Top 3 Performers of Month
+    // Top 3 Performers of Month
     // =============================
     const monthly_sales_all = await Sales.aggregate([
       {
@@ -247,34 +303,70 @@ const getSaleDashboard = async (req, res) => {
         return {
           name: performer?.name || "Unknown",
           sales: p.sales,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${performer?.name || "X"}`,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${performer?.name || "X"
+            }`,
         };
       })
     );
 
-    // Profile Data 
-    const profile = {
-      name: user.name,
-      role: user.role
+    // =============================
+    // Final Incentive (Max)
+    // =============================
+    let finalIncentive = 0;
+    let finalSource = "";
+
+    if (monthlyCount >= 30 || monthlyCount >= 28 || monthlyCount >= 24) {
+      // Case: High sales count → compare only salesCount vs dollar-based
+      if (salesIncentive >= dollarIncentive) {
+        finalIncentive = salesIncentive;
+        finalSource = "Sales Count Based";
+      } else {
+        finalIncentive = dollarIncentive;
+        finalSource = "Dollar Based";
+      }
+    } else {
+      // Case: monthlyCount < 24 → compare weekly vs dollar-based
+      if (weeklyIncentive.totalBonus >= dollarIncentive) {
+        finalIncentive = weeklyIncentive.totalBonus;
+        finalSource = "Weekly Consistency";
+      } else {
+        finalIncentive = dollarIncentive;
+        finalSource = "Dollar Based";
+      }
     }
 
+
     // =============================
-    // Final Response (your original + new)
+    // Final Response
     // =============================
     let responseData = {
-      // original
       monthly_sale: monthly_sale.length,
       pending_payment,
       follow_ups_today,
       callback_today: callback_today.length,
       trial_pending: trial_pending.length,
 
-      // new
       profile,
-      incentive,
       salesData,
       attendanceData,
       topPerformers,
+
+      incentive: {
+        dollarBased: {
+          totalSalesAmount,
+          value: dollarIncentive,
+        },
+        salesCountBased: {
+          monthlyCount,
+          value: salesIncentive,
+          managerBonus,
+        },
+        weeklyConsistency: weeklyIncentive,
+        final: {
+          value: finalIncentive,
+          source: finalSource,
+        }
+      },
     };
 
     res.status(200).json({
@@ -291,58 +383,247 @@ const getSaleDashboard = async (req, res) => {
   }
 };
 
-module.exports = { getSaleDashboard };
+// const getSaleDashboard = async (req, res) => {
+//   try {
+//     const empId = req.params.id;
+
+//     // Base data
+//     const all_Sale = await Sales.find({ assignedEmployee: empId });
+//     const all_Trial = await Trial.find({ assignedEmployee: empId });
+//     const all_FollowUps = await FollowUp.find({ salesPerson: empId });
+//     const all_Callback = await Callback.find({ createdBy: empId });
+
+//     const now = new Date();
+//     const currentDate = now.getDate();
+//     const currentMonth = now.getMonth();
+//     const currentYear = now.getFullYear();
+
+//     // =============================
+//     // 1. Monthly Sales
+//     // =============================
+//     const monthly_sale = all_Sale.filter((item) => {
+//       const createdAt = new Date(item.createdAt);
+//       return (
+//         createdAt.getMonth() === currentMonth &&
+//         createdAt.getFullYear() === currentYear
+//       );
+//     });
 
 
-const getAdminDashboard_old = async (req, res) => {
-  try {
-    const services = await Service.find().populate("manager", "name");
+//     // =============================
+//     // 1.Profile Data
+//     // =============================
+//     const user = await User.findById(empId);
+//     const profile = {
+//       name: user.name,
+//       role: user.role,
+//     };
 
-    const dashboardData = await Promise.all(
-      services.map(async (service) => {
-        const sales = await Sales.find({ service: service._id });
+//     // =============================
+//     // Incentive Calculation
+//     // =============================
+//     function getTuesdayWeekRanges(year, month) {
+//       const ranges = [];
+//       const firstDay = new Date(year, month, 1);
 
-        const totalRevenue = sales.reduce(
-          (sum, sale) => sum + (sale.totalAmount || 0),
-          0
-        );
-        const totalSales = sales.length;
+//       // find first Tuesday of month
+//       let firstTuesday = new Date(firstDay);
+//       while (firstTuesday.getDay() !== 2) {
+//         firstTuesday.setDate(firstTuesday.getDate() + 1);
+//       }
 
-        const customerIds = new Set(
-          sales.map((sale) => sale.customer?.toString())
-        );
-        const pending = sales.filter((s) => s.status === "pending").length;
-        const expiring = 0; 
+//       // build 4 weeks (Tue → next Mon 10:00AM)
+//       for (let i = 0; i < 4; i++) {
+//         const start = new Date(firstTuesday);
+//         start.setDate(start.getDate() + i * 7);
 
-        return {
-          name: service.name,
-          revenue: totalRevenue,
-          sales: totalSales,
-          customers: customerIds.size,
-          pending,
-          expiring,
-          description: service.description || "",
-          manager: {
-            label: service.manager?.name || "Unassigned",
-            value: service.manager?._id?.toString() || "",
-          },
-        };
-      })
-    );
+//         const end = new Date(start);
+//         end.setDate(start.getDate() + 6); // move to Monday
+//         end.setHours(10, 0, 0, 0); // cutoff at 10:00 AM
 
-    res.status(200).json({
-      success: true,
-      data: dashboardData,
-    });
-  } catch (err) {
-    console.error("Internal Server Error!", err);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error!",
-    });
-  }
-};
+//         // cap inside the same month
+//         if (start.getMonth() !== month) break;
+//         if (end.getMonth() !== month) {
+//           end.setMonth(month + 1, 0); // last date of current month
+//           end.setHours(23, 59, 59, 999); // end of day if spill over
+//         }
 
+//         ranges.push({ start, end });
+//       }
+
+//       return ranges;
+//     }
+
+
+//     const ranges = getTuesdayWeekRanges(currentYear, currentMonth);
+
+//     const salesData = ranges.map((range, i) => {
+//       const count = monthly_sale.filter((s) => {
+//         const d = new Date(s.createdAt);
+//         return d >= range.start && d <= range.end;
+//       }).length;
+//       return { week: `Week ${i + 1}`, sales: count };
+//     });
+
+//     const weeklySales = salesData.map((w) => w.sales);
+
+//     // Carry-forward incentive function
+//     function calculateIncentive(weeklySales) {
+//       const weeklyTarget = 6;
+//       const weeklyBonus = 1000;
+//       let totalBonus = 0;
+//       let carryForward = 0;
+//       const weekDetails = [];
+
+//       for (let i = 0; i < weeklySales.length; i++) {
+//         let weekSales = weeklySales[i] + carryForward;
+//         let bonus = 0;
+
+//         if (weekSales >= weeklyTarget) {
+//           bonus = weeklyBonus;
+//           weekSales -= weeklyTarget;
+//           carryForward = weekSales; // extra goes to next week
+//         } else {
+//           carryForward = 0; // reset if not enough
+//         }
+
+//         totalBonus += bonus;
+//         weekDetails.push({
+//           week: `Week ${i + 1}`,
+//           sales: weeklySales[i],
+//           carryForward,
+//           bonus,
+//         });
+//       }
+
+//       return { totalBonus, weekDetails, target: user.target };
+//     }
+
+//     const incentive = calculateIncentive(weeklySales);
+
+//     // =============================
+//     // 2. Pending Payments
+//     // =============================
+//     const pending_payment = all_Sale
+//       .filter((item) => item.status === "pending")
+//       .reduce((total, item) => total + (item.totalAmount || 0), 0);
+
+//     // =============================
+//     // 3. Today’s follow-ups & callbacks
+//     // =============================
+//     const follow_ups_today = all_FollowUps.length;
+//     const callback_today = all_Callback.filter((item) => {
+//       const scheduledTime = new Date(item.scheduledTime);
+//       return (
+//         scheduledTime.getDate() === currentDate &&
+//         scheduledTime.getMonth() === currentMonth &&
+//         scheduledTime.getFullYear() === currentYear
+//       );
+//     });
+
+//     // =============================
+//     // 4. Trial pending
+//     // =============================
+//     const trial_pending = all_Trial.filter((item) => item.status === "pending");
+
+//     // =============================
+//     // 5. Monthly Attendance
+//     // =============================
+//     const attendances = await Attendance.find({
+//       userId: empId,
+//       loginTime: {
+//         $gte: new Date(currentYear, currentMonth, 1),
+//         $lt: new Date(currentYear, currentMonth + 1, 1),
+//       },
+//     });
+
+//     let daysPresent = attendances.filter(
+//       (a) => a.status === "full" || a.status === "half"
+//     ).length;
+//     let leaves = attendances.filter((a) => a.status === "absent").length;
+
+//     const lateLogins = attendances.filter((a) => {
+//       const loginTime = new Date(a.loginTime);
+//       return (
+//         loginTime.getHours() > 9 ||
+//         (loginTime.getHours() === 9 && loginTime.getMinutes() > 15)
+//       );
+//     }).length;
+
+//     const attendanceData = {
+//       daysPresent,
+//       lateLogins,
+//       leaves,
+//     };
+
+//     // =============================
+//     // 6. Top 3 Performers of Month
+//     // =============================
+//     const monthly_sales_all = await Sales.aggregate([
+//       {
+//         $match: {
+//           createdAt: {
+//             $gte: new Date(currentYear, currentMonth, 1),
+//             $lt: new Date(currentYear, currentMonth + 1, 1),
+//           },
+//         },
+//       },
+//       { $group: { _id: "$assignedEmployee", sales: { $sum: 1 } } },
+//       { $sort: { sales: -1 } },
+//       { $limit: 3 },
+//     ]);
+
+//     const topPerformers = await Promise.all(
+//       monthly_sales_all.map(async (p) => {
+//         const performer = await User.findById(p._id);
+//         return {
+//           name: performer?.name || "Unknown",
+//           sales: p.sales,
+//           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${performer?.name || "X"
+//             }`,
+//         };
+//       })
+//     );
+
+
+
+//     // =============================
+//     // Final Response
+//     // =============================
+//     let responseData = {
+//       monthly_sale: monthly_sale.length,
+//       pending_payment,
+//       follow_ups_today,
+//       callback_today: callback_today.length,
+//       trial_pending: trial_pending.length,
+
+//       profile,
+//       salesData,
+//       attendanceData,
+//       topPerformers,
+
+//       // Incentive details
+//       incentive,
+//     };
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Dashboard Data Retrieved",
+//       data: responseData,
+//     });
+//   } catch (err) {
+//     console.error("Internal Server Error !", err);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error!",
+//     });
+//   }
+// };
+
+
+/* ================================
+   3. Admin Dashboard
+================================= */
 const getAdminDashboard = async (req, res) => {
   try {
     const services = await Service.find().populate("manager", "name");
@@ -364,7 +645,7 @@ const getAdminDashboard = async (req, res) => {
 
     const allUsers = await User.find().populate("assignedService");
 
-    // 1. Dashboard Summary per Service
+    // Per service summary
     const dashboardData = await Promise.all(
       services.map(async (service) => {
         const sales = allSales.filter(
@@ -410,9 +691,8 @@ const getAdminDashboard = async (req, res) => {
       })
     );
 
-    // 2. Top 5 Sales Employees Leaderboard
+    // Top 5 Sales Employees Leaderboard
     const employeeMap = new Map();
-
     for (const sale of allSales) {
       if (!sale.assignedEmployee) continue;
 
@@ -430,12 +710,11 @@ const getAdminDashboard = async (req, res) => {
 
       employeeMap.set(key, existing);
     }
-
     const salesLeaderboardData = Array.from(employeeMap.values())
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // 3. Expiring Subscriptions
+    // Expiring subscriptions
     const expiringSubs = allActivations
       .filter((a) => {
         if (!a.expirationDate) return false;
@@ -453,9 +732,8 @@ const getAdminDashboard = async (req, res) => {
         ),
       }));
 
-    // 4. Employee Overview per Service
+    // Employee overview per service
     const serviceRoleMap = {};
-
     for (const user of allUsers) {
       const serviceName = user.assignedService?.name || "Unknown";
       const role = user.role || "unknown";
@@ -495,8 +773,6 @@ const getAdminDashboard = async (req, res) => {
     });
   }
 };
-
-
 
 module.exports = {
   getActivationDashboard,

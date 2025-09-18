@@ -97,8 +97,8 @@ const getInvoiceById = async (req, res) => {
 // ===== GET Invoices by Company =====
 const getInvoicesByCompany = async (req, res) => {
     try {
-        const { companyId } = req.params;
-        const invoices = await Invoice.find({ company: companyId }).populate("company", "name");
+        const { id } = req.params;
+        const invoices = await Invoice.find({ company: id }).populate("company");
         res.status(200).json({ success: true, data: invoices });
     } catch (err) {
         console.error("Get Invoices By Company Error:", err);
