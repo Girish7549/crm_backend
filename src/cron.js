@@ -31,14 +31,18 @@ const startCronJobs = () => {
             expiredAt: { $lte: now },
             salesPerson: { $exists: true, $ne: null },
           },
-          {
-            $unset: { salesPerson: "" },
-          }
+          [
+            {
+              $set: { lastSalePerson: "$salesPerson" }
+            },
+            {
+              $unset: "salesPerson"
+            }
+          ]
         );
 
-        console.log(
-          `✅ Removed salesPerson from ${result.modifiedCount} follow-ups.`
-        );
+        console.log(`✅ Moved salesPerson → lastSalePerson for ${result.modifiedCount} follow-ups.`);
+
       }
 
       // ======= Trial Status Auto-Update =======

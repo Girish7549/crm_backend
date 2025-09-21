@@ -145,6 +145,46 @@ const getFollowUpById = async (req, res) => {
   }
 };
 
+const getFollowUpsByServiceId = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const followUps = await FollowUp.find({ assignedService: id })
+      .populate({
+        path: "salesPerson",
+        select: "id name email assignedService",
+      })
+      .populate({
+        path: "lastSalePerson",
+        select: "id name email assignedService",
+      })
+      .populate({
+        path: "notes.employee",
+        model: "User",
+        select: "id name email",
+      });
+
+    if (!followUps || followUps.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No follow-ups found for this Company",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: followUps.length,
+      message: "Follow-Ups Download Successfully",
+      data: followUps,
+    });
+  } catch (error) {
+    console.error("Error fetching follow-ups by service:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
 const updateFollowUp1 = async (req, res) => {
   try {
     const { notes, salesPerson } = req.body;
@@ -241,6 +281,7 @@ module.exports = {
   createFollowUp,
   getAllFollowUps,
   getFollowUpById,
+  getFollowUpsByServiceId,
   deleteFollowUp,
   updateFollowUp,
   // todayTotalRemaningFollowUps,

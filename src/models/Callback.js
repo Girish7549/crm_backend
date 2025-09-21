@@ -11,7 +11,7 @@ const CallbackSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required : true
+    required: true
   },
   address: {
     type: String,
@@ -20,6 +20,11 @@ const CallbackSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+    required: true,
+  },
+  assignedService: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service",
     required: true,
   },
   status: {

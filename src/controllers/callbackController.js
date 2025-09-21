@@ -4,7 +4,7 @@ const Notification = require("../models/Notification");
 
 const createCallback = async (req, res) => {
   try {
-    const { name, email, phone, address, createdBy, notes, scheduledTime } =
+    const { name, email, phone, address, createdBy, notes, scheduledTime, assignedService } =
       req.body;
     const newCallback = new Controller({
       name,
@@ -12,6 +12,7 @@ const createCallback = async (req, res) => {
       phone,
       notes,
       address,
+      assignedService,
       createdBy,
       scheduledTime,
     });
@@ -114,6 +115,39 @@ const getEmpTotalCallback = async (req, res) => {
   }
 };
 
+const getCallbacksByServiceId = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const callbacks = await Callback.find({ assignedService: id })
+      .populate({
+        path: "createdBy",
+        select: "id name email", // show who created the callback
+      })
+      .populate({
+        path: "assignedService",
+        select: "id name", // optional: service info
+      });
+
+    if (!callbacks || callbacks.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No callbacks found for this service",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: callbacks.length,
+      message: "Callbacks Retrieved Successfully",
+      data: callbacks,
+    });
+  } catch (error) {
+    console.error("Error fetching callbacks by service:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const updateCallback = async (req, res) => {
   try {
     const callbackId = req.params.id;
@@ -140,7 +174,7 @@ const updateCallback = async (req, res) => {
     if (
       scheduledTime &&
       new Date(scheduledTime).getTime() !==
-        new Date(existingCallback.scheduledTime).getTime()
+      new Date(existingCallback.scheduledTime).getTime()
     ) {
       updateOps.status =
         status === "notInterested" ? "notInterested" : "rescheduled";
@@ -189,6 +223,7 @@ module.exports = {
   createCallback,
   getAllCallbacks,
   getEmpCallback,
+  getCallbacksByServiceId,
   updateCallback,
   getEmpTotalCallback,
 };

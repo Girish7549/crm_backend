@@ -40,6 +40,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 20,
   },
+  incentive: {
+    type: Number,
+    default: 0
+  },
   team: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",

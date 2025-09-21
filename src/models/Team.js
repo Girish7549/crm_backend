@@ -17,6 +17,10 @@ const TeamSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  service: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

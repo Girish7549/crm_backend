@@ -676,6 +676,7 @@ const getAdminDashboard = async (req, res) => {
         }).length;
 
         return {
+          id: service._id,
           name: service.name,
           revenue: totalRevenue,
           sales: totalSales,

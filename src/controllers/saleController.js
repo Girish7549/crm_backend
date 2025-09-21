@@ -807,7 +807,9 @@ const updateSale = async (req, res) => {
         )
       ),
     ];
-    updateData.paymentMethod = uniquePaymentMethods.join(" / ");
+    if(updateData?.saleItems?.length > 0){
+      updateData.paymentMethod = uniquePaymentMethods.join(" / ");
+    }
 
     const updatedSale = await Sales.findByIdAndUpdate(saleId, updateData, {
       new: true,

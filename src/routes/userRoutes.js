@@ -10,9 +10,9 @@ const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCusto
 
 const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail } = require("../controllers/saleController");
 
-const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp } = require("../controllers/followupController");
+const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp, getFollowUpsByServiceId } = require("../controllers/followupController");
 
-const { createCallback, getEmpCallback, updateCallback, getEmpTotalCallback, getAllCallbacks } = require("../controllers/callbackController");
+const { createCallback, getEmpCallback, updateCallback, getEmpTotalCallback, getAllCallbacks, getCallbacksByServiceId } = require("../controllers/callbackController");
 
 const { createNotification, getNotificationsByEmployee, deleteNotification } = require("../controllers/notificationController");
 
@@ -75,6 +75,7 @@ router.get("/customer/search", searchCustomer);
 // Callback Routes
 router.get("/callbacks", getAllCallbacks);
 router.get("/callback/employee/:id", getEmpCallback);
+router.get("/callbacks/company/:id", getCallbacksByServiceId);
 router.get("/totalcallback/employee/:id", getEmpTotalCallback);
 router.put("/callback/:id", updateCallback);
 router.post("/callback", createCallback);
@@ -145,6 +146,7 @@ router.delete("/trialActivations/:id", deleteTrialActivation);
 // Follow-Ups
 router.get("/followUps", getAllFollowUps);
 router.get("/followUps/employee/:id", getFollowUpById);
+router.get("/followUps/company/:id", getFollowUpsByServiceId);
 router.put("/followUps/:id", updateFollowUp);
 router.post("/followUps", createFollowUp);
 router.delete("/followUps/:id", deleteFollowUp);
