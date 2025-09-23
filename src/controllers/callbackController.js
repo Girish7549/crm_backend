@@ -35,6 +35,7 @@ const createCallback = async (req, res) => {
 const getAllCallbacks = async (req, res) => {
   try {
     const callbacks = await Callback.find()
+      .populate("assignedService")
       .populate('createdBy', 'name email role') // only selected fields
       .sort({ createdAt: -1 }) // newest first
 

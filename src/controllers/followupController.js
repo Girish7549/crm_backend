@@ -117,7 +117,7 @@ const createFollowUp = async (req, res) => {
 
 const getAllFollowUps = async (req, res) => {
   try {
-    const followUps = await FollowUp.find().populate("salesPerson");
+    const followUps = await FollowUp.find().populate("salesPerson").populate("assignedService");
     res.status(200).json({ success: true, followUps });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
