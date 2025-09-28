@@ -6,7 +6,7 @@ const { createService, getService, updateService, deleteService } = require("../
 
 const { login } = require("../controllers/authController");
 
-const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer, uploadProfile } = require("../controllers/customerController");
+const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer, uploadProfile, getCustomerById } = require("../controllers/customerController");
 
 const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail } = require("../controllers/saleController");
 
@@ -77,6 +77,7 @@ router.get("/salary/calc", calculateSalary);
 
 // Customer Routes
 router.get("/customer", getCustomer);
+router.get("/customer/:id", getCustomerById);
 router.get("/customer/employee/:id", getEmpCustomer);
 router.get("/customer-Not-Sale/employee/:id", getEmpCustomerNotSale);
 router.put("/customer/:id", upload.fields([{ name: "image", maxCount: 1 }]), updateCustomer);

@@ -297,6 +297,78 @@ const getEmpCustomerNotSale = async (req, res) => {
   }
 };
 
+// ✅ Get customer with plan details by ID
+const getCustomerById = async (req, res) => {
+  try {
+    const customerId = req.params.id;
+
+    if (!customerId) {
+      return res.status(400).json({ error: "Customer ID is required" });
+    }
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // ✅ find all sales for customer
+    const sales = await Sales.find({ customer: customer._id }).sort({
+      createdAt: -1,
+    });
+
+    let planDetails = [];
+
+    sales.forEach((sale) => {
+      sale.saleItems.forEach((item) => {
+        item.devices.forEach((device) => {
+          const planStart = device.createdAt || sale.createdAt;
+          const durationMonths = device.month || 0;
+
+          // expiration = start date + months
+          const expirationDate = new Date(planStart);
+          expirationDate.setMonth(expirationDate.getMonth() + durationMonths);
+
+          const totalDays = Math.ceil(
+            (expirationDate - planStart) / (1000 * 60 * 60 * 24)
+          );
+          const remainingDays = Math.max(
+            0,
+            Math.ceil((expirationDate - Date.now()) / (1000 * 60 * 60 * 24))
+          );
+
+          planDetails.push({
+            plan: item.plan,
+            deviceType: device.deviceType,
+            customPrice: device.customPrice,
+            paymentMethod: device.paymentMethod,
+            status: sale.status,
+            startDate: planStart,
+            expirationDate,
+            totalDays,
+            remainingDays,
+          });
+        });
+      });
+    });
+
+    const customerData = customer.toObject();
+    customerData.plan = planDetails;
+
+    res.status(200).json({
+      success: true,
+      message: "Customer details fetched successfully",
+      data: customerData,
+    });
+  } catch (err) {
+    console.error("getCustomerById error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch customer details. Please try again later.",
+    });
+  }
+};
+
+
 const searchCustomer = async (req, res) => {
   try {
     const empId = req.query.empId;
@@ -462,6 +534,7 @@ const updateCustomer = async (req, res) => {
         req.files.image[0].originalname,
         "image"
       );
+      console.log("IMAGE URL :", uploadedImage)
       updateData.profileImage = uploadedImage;
     } else if (existingProfile) {
       // If no new upload but old image is kept
@@ -546,6 +619,7 @@ module.exports = {
   createRefferedCustomer,
   getEmpCustomerNotSale,
   getCustomer,
+  getCustomerById,
   searchCustomer,
   getEmpCustomer,
   updateCustomer,

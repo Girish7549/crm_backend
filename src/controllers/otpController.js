@@ -103,8 +103,6 @@ const sendOtp = async (req, res) => {
 // };
 
 
-
-
 const verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -159,7 +157,7 @@ const verifyOtp = async (req, res) => {
                         deviceType: device.deviceType,
                         customPrice: device.customPrice,
                         paymentMethod: device.paymentMethod,
-                        status: device.status,
+                        status: sale.status,
                         startDate: planStart,
                         expirationDate,
                         totalDays,
@@ -170,7 +168,7 @@ const verifyOtp = async (req, res) => {
         });
 
         const customerData = customer.toObject();
-        customerData.plan = planDetails;
+        // customerData.plan = planDetails;
         // console.log("customer :", customerData)
 
         res.json({

@@ -13,7 +13,7 @@ const CustomerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  profile: {
+  profileImage: {
     type: String,
   },
   whatsapp: {
