@@ -1,31 +1,30 @@
 const mongoose = require("mongoose");
 
-const attendanceSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    loginTime: {
-      type: Date,
-      required: true,
-    },
-    logoutTime: {
-      type: Date,
-      required: true,
-    },
-    durationSeconds: {
-      type: Number,
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ['full', 'half', 'absent'],
-      default: 'absent'
-    }
+const AttendanceSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
-  { timestamps: true }
-);
+  date: {
+    type: Date,
+    required: true,
+  },
+  punchIn: { type: Date },
+  punchOut: { type: Date },
 
-module.exports = mongoose.model("Attendance", attendanceSchema);
+  // Breaks
+  break1Start: { type: Date },
+  break1End: { type: Date },
+  lunchStart: { type: Date },
+  lunchEnd: { type: Date },
+  break2Start: { type: Date },
+  break2End: { type: Date },
+
+  totalWorkingHours: { type: Number, default: 0 },
+  totalBreakMinutes: { type: Number, default: 0 },
+
+  createdAt: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model("Attendance", AttendanceSchema);

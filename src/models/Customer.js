@@ -13,6 +13,9 @@ const CustomerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  profile: {
+    type: String,
+  },
   whatsapp: {
     type: String,
   },
@@ -28,7 +31,7 @@ const CustomerSchema = new mongoose.Schema({
   //     ref: "Subscription"
   // },
   refferCode: {
-      type: String,
+    type: String,
   },
   refferedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -40,6 +43,16 @@ const CustomerSchema = new mongoose.Schema({
       ref: "Customer",
     },
   ],
+  totalEarning: {
+    type: Number,
+    default: 0
+  },
+  wallet: {
+    bonusBalance: { type: Number, default: 50 }, // company gift
+    commissionBalance: { type: Number, default: 0 },
+    unlockedBalance: { type: Number, default: 0 },
+  },
+  referralCount: { type: Number, default: 0 },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

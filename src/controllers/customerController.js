@@ -1,6 +1,7 @@
 const Customer = require("../models/Customer");
 const Sales = require("../models/Sales");
 const FollowUp = require("../models/FollowUp");
+const cloudinary = require("../config/cloudinaryConfig");
 
 const createCustomer = async (req, res) => {
   try {
@@ -43,7 +44,7 @@ const createCustomer = async (req, res) => {
       createdBy !== isExistInFollowUps?.salesPerson?._id?.toString() &&
       createdBy === isExistInFollowUps?.salesPerson?._id?.toString() &&
       purchasedService ===
-        isExistInFollowUps?.salesPerson?.assignedService.toString()
+      isExistInFollowUps?.salesPerson?.assignedService.toString()
     ) {
       return res.status(400).json({
         success: false,
@@ -52,11 +53,10 @@ const createCustomer = async (req, res) => {
       });
     }
 
-    let refferCode = `${
-      name.length <= 3
-        ? name.slice(0, 3) + phone.slice(5, 10)
-        : name.slice(0, 4) + phone.slice(6, 10)
-    }`.toUpperCase();
+    let refferCode = `${name.length <= 3
+      ? name.slice(0, 3) + phone.slice(5, 10)
+      : name.slice(0, 4) + phone.slice(6, 10)
+      }`.toUpperCase();
     console.log("tin goooo");
 
     const newCustomer = new Customer({
@@ -113,7 +113,7 @@ const createRefferedCustomer = async (req, res) => {
       isExistInFollowUps &&
       createdBy !== isExistInFollowUps?.salesPerson._id?.toString() &&
       purchasedService !==
-        isExistInFollowUps?.salesPerson.assignedService.toString()
+      isExistInFollowUps?.salesPerson.assignedService.toString()
     ) {
       return res.status(400).json({
         success: false,
@@ -122,11 +122,10 @@ const createRefferedCustomer = async (req, res) => {
       });
     }
 
-    let refferCode = `${
-      name.length <= 3
-        ? name.slice(0, 3) + phone.slice(5, 10)
-        : name.slice(0, 4) + phone.slice(6, 10)
-    }`.toUpperCase();
+    let refferCode = `${name.length <= 3
+      ? name.slice(0, 3) + phone.slice(5, 10)
+      : name.slice(0, 4) + phone.slice(6, 10)
+      }`.toUpperCase();
 
     const newCustomer = new Customer({
       name,
@@ -370,7 +369,7 @@ const updateCustomer1 = async (req, res) => {
   }
 };
 
-const updateCustomer = async (req, res) => {
+const updateCustomerOldWorking = async (req, res) => {
   try {
     const customerId = req.params.id;
     const updateData = req.body;
@@ -429,6 +428,99 @@ const updateCustomer = async (req, res) => {
       message: "Internal server error",
     });
   }
+};
+
+const updateCustomer = async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const updateData = { ...req.body };
+    const { email, purchasedService, existingProfile } = updateData;
+
+    console.log("UPDATING DATA:", updateData);
+
+    // ✅ Check duplicate (email + service) except this customer
+    const isExist = await Customer.findOne({
+      email,
+      purchasedService,
+      _id: { $ne: customerId },
+    })
+      .populate("createdBy")
+      .populate("purchasedService");
+
+    if (isExist) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer with this email and service already exists",
+        data: isExist,
+      });
+    }
+
+    // ✅ Handle profile image upload
+    if (req.files?.image?.length > 0) {
+      const uploadedImage = await uploadBufferToCloudinary(
+        req.files.image[0].buffer,
+        req.files.image[0].originalname,
+        "image"
+      );
+      updateData.profileImage = uploadedImage;
+    } else if (existingProfile) {
+      // If no new upload but old image is kept
+      updateData.profileImage = existingProfile;
+    }
+
+    // ✅ Update safely
+    const customer = await Customer.findByIdAndUpdate(customerId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Customer updated successfully",
+      data: customer,
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate value error (email must be unique)",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Reusable function (just like in your invoice controller)
+const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "sales/paymentProofs", // store in separate folder
+        use_filename: true,
+        public_id: originalname.split(".")[0].trim(),
+        unique_filename: false,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
 };
 
 const deleteCustomer = async (req, res) => {

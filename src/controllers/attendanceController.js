@@ -1,88 +1,220 @@
+// const express = require("express");
+// const router = express.Router();
+// const Attendance = require("../models/Attendance");
+// const User = require("../models/User");
+
+// const createAttendence = async (req, res) => {
+//   const { userId, loginTime, logoutTime, durationSeconds } = req.body;
+
+//   if (!userId || !loginTime || !logoutTime || typeof durationSeconds !== "number") {
+//     return res.status(400).json({ message: "Missing required fields" });
+//   }
+
+//   const status = durationSeconds <= 0 ? "absent" : durationSeconds < 32400 ? "half" : "full";
+
+//   try {
+//     const nineHoursAgo = new Date(Date.now() - 9 * 60 * 60 * 1000);
+
+//     const existingRecord = await Attendance.findOne({
+//       userId,
+//       loginTime: { $gte: nineHoursAgo },
+//     });
+
+//     if (existingRecord) {
+//       await Attendance.deleteOne({ _id: existingRecord._id });
+//     }
+
+//     // 🔹 Mark user offline here
+//     await User.findByIdAndUpdate(userId, {
+//       isOnline: false,
+//       lastSeen: new Date()
+//     });
+
+//     const userInfo = await User.findById(userId);
+//     if (userInfo.role === "admin") return;
+
+//     const record = await Attendance.create({
+//       userId,
+//       loginTime,
+//       logoutTime,
+//       durationSeconds,
+//       status,
+//     });
+
+//     res.status(201).json({ message: "Attendance recorded", record });
+//   } catch (error) {
+//     console.error("Error saving attendance:", error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
+// const getAllAttendence = async (req, res) => {
+//   try {
+//     const attendence = await Attendance.find().populate("userId");
+//     res.status(200).json({
+//       success: true,
+//       message: "Employee Attandence",
+//       data: attendence,
+//     });
+//   } catch (err) {
+//     console.log("Error!", err);
+//     res.status(500).json({ success: false, message: "Internal Server Error" });
+//   }
+// };
+
+// const deleteAttandence = async (req, res) => {
+//   try {
+//     const id = req.params.id;
+//     const deleteAttandence = await Attendance.findByIdAndDelete(id);
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Attendance delete successfully...",
+//       data: deleteAttandence,
+//     });
+//   } catch (err) {
+//     console.log("Error!", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
+// module.exports = {
+//   createAttendence,
+//   getAllAttendence,
+//   deleteAttandence,
+// };
+
+
+
 const express = require("express");
-const router = express.Router();
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 
-const createAttendence = async (req, res) => {
-  const { userId, loginTime, logoutTime, durationSeconds } = req.body;
-
-  if (!userId || !loginTime || !logoutTime || typeof durationSeconds !== "number") {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  const status = durationSeconds <= 0 ? "absent" : durationSeconds < 32400 ? "half" : "full";
-
+// Punch In
+const punchIn = async (req, res) => {
   try {
-    const nineHoursAgo = new Date(Date.now() - 9 * 60 * 60 * 1000);
+    const { userId } = req.body;
 
-    const existingRecord = await Attendance.findOne({
-      userId,
-      loginTime: { $gte: nineHoursAgo },
-    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    if (existingRecord) {
-      await Attendance.deleteOne({ _id: existingRecord._id });
+    let record = await Attendance.findOne({ user: userId, date: today });
+    if (record) {
+      return res.status(400).json({ message: "Already punched in today" });
     }
 
-    // 🔹 Mark user offline here
-    await User.findByIdAndUpdate(userId, {
-      isOnline: false,
-      lastSeen: new Date()
+    record = new Attendance({
+      user: userId,
+      date: today,
+      punchIn: new Date(),
     });
 
-    const userInfo = await User.findById(userId);
-    if (userInfo.role === "admin") return;
-
-    const record = await Attendance.create({
-      userId,
-      loginTime,
-      logoutTime,
-      durationSeconds,
-      status,
-    });
-
-    res.status(201).json({ message: "Attendance recorded", record });
-  } catch (error) {
-    console.error("Error saving attendance:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-const getAllAttendence = async (req, res) => {
-  try {
-    const attendence = await Attendance.find().populate("userId");
-    res.status(200).json({
-      success: true,
-      message: "Employee Attandence",
-      data: attendence,
-    });
+    await record.save();
+    res.json(record);
   } catch (err) {
-    console.log("Error!", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({ error: err.message });
   }
 };
 
-const deleteAttandence = async (req, res) => {
+// Punch Out
+const punchOut = async (req, res) => {
   try {
-    const id = req.params.id;
-    const deleteAttandence = await Attendance.findByIdAndDelete(id);
+    const { userId } = req.body;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    res.status(200).json({
-      success: true,
-      message: "Attendance delete successfully...",
-      data: deleteAttandence,
-    });
+    const record = await Attendance.findOne({ user: userId, date: today });
+    if (!record) return res.status(404).json({ message: "Not punched in today" });
+
+    record.punchOut = new Date();
+
+    // Calculate break minutes
+    let breakMinutes = 0;
+    if (record.break1Start && record.break1End)
+      breakMinutes += (record.break1End - record.break1Start) / (1000 * 60);
+    if (record.lunchStart && record.lunchEnd)
+      breakMinutes += (record.lunchEnd - record.lunchStart) / (1000 * 60);
+    if (record.break2Start && record.break2End)
+      breakMinutes += (record.break2End - record.break2Start) / (1000 * 60);
+
+    record.totalBreakMinutes = Math.round(breakMinutes);
+
+    // Calculate working hours
+    const totalHours =
+      (record.punchOut - record.punchIn) / (1000 * 60 * 60);
+    record.totalWorkingHours = parseFloat(
+      (totalHours - breakMinutes / 60).toFixed(2)
+    );
+
+    await record.save();
+    res.json(record);
   } catch (err) {
-    console.log("Error!", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    res.status(500).json({ error: err.message });
   }
 };
 
-module.exports = {
-  createAttendence,
-  getAllAttendence,
-  deleteAttandence,
+// Break Start
+const startBreak = async (req, res) => {
+  try {
+    const { userId, type } = req.body; // type = "break1" | "lunch" | "break2"
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const record = await Attendance.findOne({ user: userId, date: today });
+    if (!record) return res.status(404).json({ message: "Not punched in today" });
+
+    const field = `${type}Start`;
+    record[field] = new Date();
+
+    await record.save();
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
+
+// Break End
+const endBreak = async (req, res) => {
+  try {
+    const { userId, type } = req.body; // type = "break1" | "lunch" | "break2"
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const record = await Attendance.findOne({ user: userId, date: today });
+    if (!record) return res.status(404).json({ message: "Not punched in today" });
+
+    const field = `${type}End`;
+    record[field] = new Date();
+
+    await record.save();
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get Attendance by Employee & Date Filter
+const getAttendance = async (req, res) => {
+  try {
+    const { userId, startDate, endDate } = req.query;
+    const filter = {};
+
+    if (userId) filter.user = userId;
+    if (startDate && endDate) {
+      filter.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    const records = await Attendance.find(filter).populate("user");
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { punchIn, punchOut, startBreak, endBreak, getAttendance }

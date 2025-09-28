@@ -6,7 +6,7 @@ const { createService, getService, updateService, deleteService } = require("../
 
 const { login } = require("../controllers/authController");
 
-const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer } = require("../controllers/customerController");
+const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer, uploadProfile } = require("../controllers/customerController");
 
 const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail } = require("../controllers/saleController");
 
@@ -35,12 +35,14 @@ const { createTrialActivation, getAllTrialActivations, getTrialActivationById, u
 const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById, checkMacExists, getAllMacAddresses, emptyMacAddress } = require("../controllers/macAddressController");
 
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
-const { createAttendence, getAllAttendence, deleteAttandence } = require("../controllers/attendanceController");
+const { punchIn, punchOut, startBreak, endBreak, getAttendance } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
 const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updatePaymentMethod, deletePaymentMethod, getPaymentMethodsByCompanyId } = require("../controllers/PaymentMethodController");
 const { createInvoice, getInvoices, getInvoiceById, getInvoicesByCompany, updateInvoice, deleteInvoice } = require("../controllers/InvoiceController");
+const { calculateSalary } = require("../controllers/salaryController");
+const { sendOtp, verifyOtp } = require("../controllers/otpController");
 
 // Service Routes
 router.post("/service", createService);
@@ -58,15 +60,27 @@ router.post("/login", login);
 router.delete("/user/:id", deleteUser);
 
 // Attendence Routes
-router.post("/attendance", createAttendence);
-router.get("/attendance", getAllAttendence);
-router.delete("/attendance/:id", deleteAttandence);
+// router.post("/attendance", createAttendence);
+// router.get("/attendance", getAllAttendence);
+// router.delete("/attendance/:id", deleteAttandence);
+
+// Attendance
+router.post("/attendance/punch-in", punchIn);
+router.post("/attendance/punch-out", punchOut);
+router.post("/attendance/start-break", startBreak);
+router.post("/attendance/end-break", endBreak);
+router.get("/attendance", getAttendance);
+
+// Salary
+router.get("/salary/calc", calculateSalary);
+
 
 // Customer Routes
 router.get("/customer", getCustomer);
 router.get("/customer/employee/:id", getEmpCustomer);
 router.get("/customer-Not-Sale/employee/:id", getEmpCustomerNotSale);
-router.put("/customer/:id", updateCustomer);
+router.put("/customer/:id", upload.fields([{ name: "image", maxCount: 1 }]), updateCustomer);
+// router.put("/customer/upload-profile/:id", upload.fields([{ name: "image", maxCount: 1 }]), uploadProfile);
 router.post("/customer", createCustomer);
 router.post("/reffers-customer", createRefferedCustomer);
 router.delete("/customer/:id", deleteCustomer);
@@ -202,7 +216,7 @@ router.put('/paymentMethod/:id', updatePaymentMethod);
 router.delete('/paymentMethod/:id', deletePaymentMethod);
 
 // Invoice Controller ( Company Name, Email, Logo )
-router.post( "/invoice", upload.fields([{ name: "logo", maxCount: 1 }]), createInvoice);
+router.post("/invoice", upload.fields([{ name: "logo", maxCount: 1 }]), createInvoice);
 router.get('/invoice', getInvoices);
 router.get('/invoice/:id', getInvoiceById);
 router.get('/invoice-by-company/:id', getInvoicesByCompany);
@@ -215,6 +229,10 @@ router.get("/officeIp/:id", getIPById);
 router.post("/officeIp", addIP);
 router.put("/officeIp/:id", updateIP);
 router.delete("/officeIp/:id", deleteIP);
+
+// OTP Controllers
+router.post("/otp/send", sendOtp);
+router.post("/otp/verify", verifyOtp);
 
 
 module.exports = router;

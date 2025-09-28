@@ -5,12 +5,22 @@ require("dotenv").config();
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, assignedService, team , gender} = req.body;
+    const { name, email, password, role, assignedService, team, gender } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("password :", password);
     console.log("hashedPassword :", hashedPassword);
 
+    // Generate empId
+    const yearSuffix = new Date().getFullYear().toString().slice(-2); // "25"
+    const namePrefix = name.substring(0, 4); // First 3-4 letters
+    const baseEmpId = `${namePrefix}${yearSuffix}`;
+
+    // Count how many users already exist with this base
+    const count = await User.countDocuments({ empId: { $regex: `^${baseEmpId}` } });
+    const empId = `${baseEmpId}${String(count + 1).padStart(2, "0")}`;
+
     const newUser = new User({
+      empId,
       name,
       email,
       gender,
@@ -34,6 +44,8 @@ const createUser = async (req, res) => {
     });
   }
 };
+
+
 const searchUser = async (req, res) => {
   try {
     const query = req.params.id?.trim();
@@ -56,7 +68,7 @@ const searchUser = async (req, res) => {
       ],
     }).populate("team")
       .populate("assignedService");
-      
+
     res.status(200).json({
       success: true,
       message: "Search User Retrived Successfully",
