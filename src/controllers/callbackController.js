@@ -182,6 +182,10 @@ const updateCallback = async (req, res) => {
       updateOps.scheduledTime = scheduledTime;
     }
 
+    if (phone) {
+      updateOps.phone = phone;
+    }
+
     // note exist krta h to update kr do aur status ko resheduled kr do
     if (notes && notes.length > 0) {
       await Callback.findByIdAndUpdate(
@@ -193,7 +197,7 @@ const updateCallback = async (req, res) => {
         { new: true, runValidators: true }
       );
     } else {
-      await Callback.findByIdAndUpdate(callbackId, updateOps, phone, {
+      await Callback.findByIdAndUpdate(callbackId, updateOps, {
         new: true,
         runValidators: true,
       });
