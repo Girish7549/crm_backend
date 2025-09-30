@@ -43,6 +43,8 @@ const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updateP
 const { createInvoice, getInvoices, getInvoiceById, getInvoicesByCompany, updateInvoice, deleteInvoice } = require("../controllers/InvoiceController");
 const { calculateSalary } = require("../controllers/salaryController");
 const { sendOtp, verifyOtp } = require("../controllers/otpController");
+const { createReferral, getReferrals, getReferralsByCustomer, getReferral, updateReferral, deleteReferral, markReferralPaid } = require("../controllers/ReferralController");
+const { generateReferralLink, getReferralDetails, getCustomerReferrals, deleteReferralLink } = require("../controllers/RefferalLinkController");
 
 // Service Routes
 router.post("/service", createService);
@@ -235,5 +237,19 @@ router.delete("/officeIp/:id", deleteIP);
 router.post("/otp/send", sendOtp);
 router.post("/otp/verify", verifyOtp);
 
+// Referral Controllers
+router.post("/referral", createReferral);
+router.get("/referral", getReferrals);
+router.get("/referral/customer/:id", getReferralsByCustomer);
+router.get("/referral/:id", getReferral);
+router.put("/referral/:id", updateReferral);
+router.delete("/referral/:id", deleteReferral);
+router.put("/referral/markPaid/:id", markReferralPaid);
+
+// Referral Link Controllers
+router.post("/referralLink", generateReferralLink);
+router.get("/referralLink/:id", getReferralDetails);
+router.get("/referralLink/customer/:id", getCustomerReferrals);
+router.delete("/referralLink/:id", deleteReferralLink); 
 
 module.exports = router;
