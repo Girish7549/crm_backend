@@ -29,7 +29,7 @@ const createReferral = async (req, res) => {
 
 const getReferrals = async (req, res) => {
     try {
-        const referrals = await Referral.find().populate("customer", "name email phone");
+        const referrals = await Referral.find().populate("customer", "name email phone createdBy");
         res.status(200).json({ success: true, data: referrals });
     } catch (err) {
         console.error("Error fetching referrals:", err);
@@ -40,7 +40,7 @@ const getReferrals = async (req, res) => {
 const getReferralsByCustomer = async (req, res) => {
     try {
         const { id } = req.params;
-        const referrals = await Referral.find({ customer: id }).populate("customer", "name email phone");
+        const referrals = await Referral.find({ customer: id }).populate("customer", "name email phone createdBy");
 
         res.status(200).json({
             success: true,

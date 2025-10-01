@@ -2,18 +2,12 @@ const Customer = require("../models/Customer");
 const Sales = require("../models/Sales");
 const FollowUp = require("../models/FollowUp");
 const cloudinary = require("../config/cloudinaryConfig");
+const ReferralLink = require("../models/ReferralLink");
+const Refferal = require("../models/Refferal");
 
 const createCustomer = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      phone,
-      whatsapp,
-      address,
-      purchasedService,
-      createdBy,
-    } = req.body;
+    const { name, email, phone, whatsapp, address, purchasedService, createdBy } = req.body;
     const isExist = await Customer.findOne({ email, purchasedService })
       .populate("createdBy")
       .populate("purchasedService");
@@ -21,6 +15,7 @@ const createCustomer = async (req, res) => {
       email: email,
       phone: phone,
     }).populate("salesPerson");
+    const isExistInLead = await Refferal.findOne({ email: email, phone: phone }).populate("customer")
 
     console.log("EXIST CUSTOMER :", isExist);
     console.log("isExistInFollowUps :", isExistInFollowUps);
@@ -29,10 +24,20 @@ const createCustomer = async (req, res) => {
     if (isExist && purchasedService !== isExist.purchasedService.toString()) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist",
+        // message: "Customer Already Exist",
+        message: `${name} already exists, created by ${isExist.createdBy.name}.`,
         data: isExist,
       });
     }
+    if (isExistInLead) {
+      return res.status(400).json({
+        success: false,
+        message: "Create as a reference customer, not direct.",
+        data: isExistInLead,
+      });
+    }
+
+
     console.log("CREATED BY :", createdBy);
     // console.log(
     //   "Follow ups saleperson BY :",
@@ -102,10 +107,23 @@ const createRefferedCustomer = async (req, res) => {
       phone: phone,
     }).populate("salesPerson");
 
+    const isExistInLead = await Refferal.findOne({ email: email, phone: phone }).populate("customer")
+
+
     if (isExist) {
       return res.status(400).json({
         success: false,
         message: "Customer Already Exist",
+      });
+    }
+
+    if (isExistInLead &&
+      createdBy !== isExistInLead.customer.createdBy.toString() &&
+      purchasedService !== isExistInLead.customer.purchasedService.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "This customer already exists in the leads. You cannot add them again.",
+        data: isExist,
       });
     }
 
@@ -117,7 +135,7 @@ const createRefferedCustomer = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Customer Already Exist22222",
+        message: "Customer Already Exist--",
         data: isExistInFollowUps,
       });
     }

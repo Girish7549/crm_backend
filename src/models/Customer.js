@@ -30,6 +30,10 @@ const CustomerSchema = new mongoose.Schema({
   //     type: mongoose.Schema.Types.ObjectId,
   //     ref: "Subscription"
   // },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
   refferCode: {
     type: String,
   },
@@ -53,10 +57,6 @@ const CustomerSchema = new mongoose.Schema({
     unlockedBalance: { type: Number, default: 0 },
   },
   referralCount: { type: Number, default: 0 },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
   trialCount: {
     type: Number,
     default: 12
