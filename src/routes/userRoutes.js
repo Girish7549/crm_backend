@@ -35,7 +35,7 @@ const { createTrialActivation, getAllTrialActivations, getTrialActivationById, u
 const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById, checkMacExists, getAllMacAddresses, emptyMacAddress } = require("../controllers/macAddressController");
 
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
-const { punchIn, punchOut, startBreak, endBreak, getAttendance, tagAttendance, upsertAttendance } = require("../controllers/attendanceController");
+const { punchIn, punchOut, startBreak, endBreak, getAttendance, tagAttendance, upsertAttendance, deleteAttendance } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
@@ -74,6 +74,7 @@ router.post("/attendance/punch-out", punchOut);
 router.post("/attendance/start-break", startBreak);
 router.post("/attendance/end-break", endBreak);
 router.get("/attendance", getAttendance);
+router.delete("/attendance/:id", deleteAttendance);
 router.put("/attendance/:id", upsertAttendance); // Intelligent update by record ID                                                 
 router.put("/attendance/:id/tag", tagAttendance);  // Tag attendance manually (FD / HD / Leave / Paid Leave)
 

@@ -255,7 +255,26 @@ const tagAttendance = async (req, res) => {
   }
 };
 
+// Delete Attendance Record
+const deleteAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const record = await Attendance.findById(id);
+    if (!record) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
+    await Attendance.findByIdAndDelete(id);
+    res.json({ message: "Attendance record deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 
-module.exports = { punchIn, punchOut, startBreak, endBreak, getAttendance, upsertAttendance, tagAttendance }
+
+
+module.exports = { punchIn, punchOut, startBreak, endBreak, getAttendance, deleteAttendance, upsertAttendance, tagAttendance }
