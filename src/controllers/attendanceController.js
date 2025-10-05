@@ -1,95 +1,3 @@
-// const express = require("express");
-// const router = express.Router();
-// const Attendance = require("../models/Attendance");
-// const User = require("../models/User");
-
-// const createAttendence = async (req, res) => {
-//   const { userId, loginTime, logoutTime, durationSeconds } = req.body;
-
-//   if (!userId || !loginTime || !logoutTime || typeof durationSeconds !== "number") {
-//     return res.status(400).json({ message: "Missing required fields" });
-//   }
-
-//   const status = durationSeconds <= 0 ? "absent" : durationSeconds < 32400 ? "half" : "full";
-
-//   try {
-//     const nineHoursAgo = new Date(Date.now() - 9 * 60 * 60 * 1000);
-
-//     const existingRecord = await Attendance.findOne({
-//       userId,
-//       loginTime: { $gte: nineHoursAgo },
-//     });
-
-//     if (existingRecord) {
-//       await Attendance.deleteOne({ _id: existingRecord._id });
-//     }
-
-//     // 🔹 Mark user offline here
-//     await User.findByIdAndUpdate(userId, {
-//       isOnline: false,
-//       lastSeen: new Date()
-//     });
-
-//     const userInfo = await User.findById(userId);
-//     if (userInfo.role === "admin") return;
-
-//     const record = await Attendance.create({
-//       userId,
-//       loginTime,
-//       logoutTime,
-//       durationSeconds,
-//       status,
-//     });
-
-//     res.status(201).json({ message: "Attendance recorded", record });
-//   } catch (error) {
-//     console.error("Error saving attendance:", error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// };
-
-// const getAllAttendence = async (req, res) => {
-//   try {
-//     const attendence = await Attendance.find().populate("userId");
-//     res.status(200).json({
-//       success: true,
-//       message: "Employee Attandence",
-//       data: attendence,
-//     });
-//   } catch (err) {
-//     console.log("Error!", err);
-//     res.status(500).json({ success: false, message: "Internal Server Error" });
-//   }
-// };
-
-// const deleteAttandence = async (req, res) => {
-//   try {
-//     const id = req.params.id;
-//     const deleteAttandence = await Attendance.findByIdAndDelete(id);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Attendance delete successfully...",
-//       data: deleteAttandence,
-//     });
-//   } catch (err) {
-//     console.log("Error!", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
-
-// module.exports = {
-//   createAttendence,
-//   getAllAttendence,
-//   deleteAttandence,
-// };
-
-
-
-const express = require("express");
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 
@@ -196,15 +104,17 @@ const endBreak = async (req, res) => {
   }
 };
 
-// Get Attendance by Employee & Date Filter
 const getAttendance = async (req, res) => {
   try {
     const { userId, startDate, endDate } = req.query;
     const filter = {};
 
-    if (userId) filter.user = userId;
+    if (userId && userId !== "all") {
+      filter.user = userId;
+    }
+
     if (startDate && endDate) {
-      filter.date = {
+      filter.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };
@@ -217,4 +127,135 @@ const getAttendance = async (req, res) => {
   }
 };
 
-module.exports = { punchIn, punchOut, startBreak, endBreak, getAttendance }
+// Helper: Convert "HH:mm" string to Date object on a given day
+const timeStringToDate = (timeStr, baseDate) => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const date = new Date(baseDate);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
+
+// Helper: compute type & status based on total hours
+const computeAttendanceType = (totalHours) => {
+  if (totalHours === 0) return { type: "leave", status: "absent" };
+  if (totalHours < 4) return { type: "half-day", status: "present" };
+  if (totalHours >= 4) return { type: "full-day", status: "present" };
+  return { type: "leave", status: "absent" };
+};
+
+// Main upsert function
+const upsertAttendance = async (req, res) => {
+  try {
+    const { userId, punchIn, punchOut, type, status } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find existing record for today
+    let record = await Attendance.findOne({ user: userId, date: today }).populate('user');
+    if (!record) record = new Attendance({ user: userId, date: today });
+
+    // Set punchIn/punchOut
+    if (punchIn) record.punchIn = timeStringToDate(punchIn, today);
+
+    if (punchOut) {
+      let outDate = timeStringToDate(punchOut, today);
+
+      // If punchOut is earlier than punchIn, it's the next day
+      if (record.punchIn && outDate <= record.punchIn) {
+        outDate.setDate(outDate.getDate() + 1);
+      }
+      record.punchOut = outDate;
+    }
+
+    // Calculate total working hours
+    if (record.punchIn && record.punchOut) {
+      let breakMinutes = 0;
+      if (record.break1Start && record.break1End)
+        breakMinutes += (record.break1End - record.break1Start) / (1000 * 60);
+      if (record.lunchStart && record.lunchEnd)
+        breakMinutes += (record.lunchEnd - record.lunchStart) / (1000 * 60);
+      if (record.break2Start && record.break2End)
+        breakMinutes += (record.break2End - record.break2Start) / (1000 * 60);
+
+      record.totalBreakMinutes = Math.round(breakMinutes);
+
+      const totalHours = (record.punchOut - record.punchIn) / (1000 * 60 * 60);
+      record.totalWorkingHours = parseFloat((totalHours - breakMinutes / 60).toFixed(2));
+
+      // Auto type & status
+      const auto = computeAttendanceType(record.totalWorkingHours);
+
+      // Apply manual override if provided, else auto
+      record.type = type?.trim() ? type : auto.type;
+      record.status = status?.trim() ? status : auto.status;
+    } else {
+      // No punches, apply manual override or default
+      record.type = type?.trim() || record.type || "leave";
+      record.status = status?.trim() || record.status || "absent";
+      record.totalWorkingHours = record.totalWorkingHours || 0;
+      record.totalBreakMinutes = record.totalBreakMinutes || 0;
+    }
+
+    await record.save();
+    res.json(record);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+// Tag Attendance manually (FD / HD / Leave / Paid Leave)
+const tagAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type } = req.body;
+    const record = await Attendance.findById(id).populate('user');
+    if (!record) return res.status(404).json({ message: "Attendance not found" });
+
+    switch (type) {
+      case "full-day":
+        record.type = "full-day";
+        record.status = "present";
+        record.totalWorkingHours = 8;
+        break;
+      case "half-day":
+        record.type = "half-day";
+        record.status = "present";
+        record.totalWorkingHours = 4;
+        break;
+      case "leave":
+        record.type = "leave";
+        record.status = "absent";
+        record.totalWorkingHours = 0;
+        record.punchIn = null;
+        record.punchOut = null;
+        record.totalBreakMinutes = 0;
+        break;
+      case "paid-leave":
+        record.type = "paid-leave";
+        record.status = "on-leave";
+        record.totalWorkingHours = 0;
+        record.punchIn = null;
+        record.punchOut = null;
+        record.totalBreakMinutes = 0;
+        break;
+      default:
+        break;
+    }
+
+    await record.save();
+    res.json(record);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+
+module.exports = { punchIn, punchOut, startBreak, endBreak, getAttendance, upsertAttendance, tagAttendance }

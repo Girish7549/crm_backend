@@ -10,16 +10,19 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  phone: {
+    type: String
+  },
   password: {
     type: String,
-    required: true,
+    // required: true,
   },
   originalPassword: {
     type: String
   },
   role: {
     type: String,
-    enum: ["admin", "sub_admin", "activation", "manager", "sales_agent", "support", "hr"],
+    enum: ["admin", "sub_admin", "activation", "manager", "sales_agent", "employee", "support", "hr"],
     required: true,
   },
   gender: {
@@ -44,14 +47,6 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  empId: { type: String, unique: true },
-  department: { type: String },
-  designation: { type: String },
-  bankName: { type: String },
-  ifscCode: { type: String },
-  bankAccount: { type: String },
-  branchName: { type: String },
-  salary: { type: Number, default: 10000 },
   department: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Department",
@@ -60,6 +55,12 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Designation",
   },
+  salary: { type: Number, default: 10000 },
+  empId: { type: String, unique: true },
+  bankName: { type: String },
+  ifscCode: { type: String },
+  bankAccNumber: { type: String },
+  branchName: { type: String },
   team: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",

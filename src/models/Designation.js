@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const DesignationSchema = new mongoose.Schema({
-    title: {
+    designation: {
         type: String,
         required: true,
     },
@@ -10,10 +10,16 @@ const DesignationSchema = new mongoose.Schema({
         ref: "Department",
         required: true,
     },
+    level: {
+        type: String,
+    },
     service: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Service",
         required: true,
+    },
+    description: {
+        type: String,
     },
     createdAt: {
         type: Date,

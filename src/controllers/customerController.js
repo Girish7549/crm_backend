@@ -8,7 +8,7 @@ const Refferal = require("../models/Refferal");
 const createCustomer = async (req, res) => {
   try {
     const { name, email, phone, whatsapp, address, purchasedService, createdBy } = req.body;
-    const isExist = await Customer.findOne({ email, purchasedService })
+    const isExist = await Customer.findOne({ email, phone, purchasedService })
       .populate("createdBy")
       .populate("purchasedService");
     const isExistInFollowUps = await FollowUp.findOne({
@@ -101,7 +101,7 @@ const createRefferedCustomer = async (req, res) => {
       refferedBy,
       createdBy,
     } = req.body;
-    const isExist = await Customer.findOne({ email, purchasedService });
+    const isExist = await Customer.findOne({ email, phone, purchasedService });
     const isExistInFollowUps = await FollowUp.findOne({
       email: email,
       phone: phone,

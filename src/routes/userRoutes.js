@@ -35,7 +35,7 @@ const { createTrialActivation, getAllTrialActivations, getTrialActivationById, u
 const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById, checkMacExists, getAllMacAddresses, emptyMacAddress } = require("../controllers/macAddressController");
 
 const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
-const { punchIn, punchOut, startBreak, endBreak, getAttendance } = require("../controllers/attendanceController");
+const { punchIn, punchOut, startBreak, endBreak, getAttendance, tagAttendance, upsertAttendance } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
@@ -45,6 +45,8 @@ const { calculateSalary } = require("../controllers/salaryController");
 const { sendOtp, verifyOtp } = require("../controllers/otpController");
 const { createReferral, getReferrals, getReferralsByCustomer, getReferral, updateReferral, deleteReferral, markReferralPaid } = require("../controllers/ReferralController");
 const { generateReferralLink, getReferralDetails, getCustomerReferrals, deleteReferralLink } = require("../controllers/RefferalLinkController");
+const { createDepartment, getDepartments, getDepartmentById, updateDepartment, deleteDepartment } = require("../controllers/DepartmentController");
+const { createDesignation, getDesignations, getDesignationById, updateDesignation, deleteDesignation } = require("../controllers/DesignationController");
 
 // Service Routes
 router.post("/service", createService);
@@ -72,6 +74,9 @@ router.post("/attendance/punch-out", punchOut);
 router.post("/attendance/start-break", startBreak);
 router.post("/attendance/end-break", endBreak);
 router.get("/attendance", getAttendance);
+router.put("/attendance/:id", upsertAttendance); // Intelligent update by record ID                                                 
+router.put("/attendance/:id/tag", tagAttendance);  // Tag attendance manually (FD / HD / Leave / Paid Leave)
+
 
 // Salary
 router.get("/salary/calc", calculateSalary);
@@ -250,6 +255,20 @@ router.put("/referral/markPaid/:id", markReferralPaid);
 router.post("/referralLink", generateReferralLink);
 router.get("/referralLink/:id", getReferralDetails);
 router.get("/referralLink/customer/:id", getCustomerReferrals);
-router.delete("/referralLink/:id", deleteReferralLink); 
+router.delete("/referralLink/:id", deleteReferralLink);
+
+// Department Controllers 
+router.post("/department", createDepartment);
+router.get("/department", getDepartments);
+router.get("/department/:id", getDepartmentById);
+router.put("/department/:id", updateDepartment);
+router.delete("/department/:id", deleteDepartment);
+
+// Designation Controllers
+router.post("/designation", createDesignation);
+router.get("/designation", getDesignations);
+router.get("/designation/:id", getDesignationById);
+router.put("/designation/:id", updateDesignation);
+router.delete("/designation/:id", deleteDesignation);
 
 module.exports = router;

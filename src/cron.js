@@ -3,6 +3,8 @@ const FollowUp = require("./models/FollowUp");
 const Trial = require("./models/Trial");
 const SaleActivation = require("./models/SaleActivation");
 const TrialActivation = require("./models/TrialActivation");
+const Attendance = require("./models/Attendance");
+const User = require("./models/User");
 
 const startCronJobs = () => {
   cron.schedule("*/1 * * * *", async () => {
@@ -103,5 +105,42 @@ const startCronJobs = () => {
     }
   });
 };
+
+
+
+// Cron job: run at 6:05 AM every day (after night shift ends)
+cron.schedule("5 6 * * *", async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // reset to start of day
+
+    const employees = await User.find(); // no active check
+
+    for (const emp of employees) {
+      const recordExists = await Attendance.findOne({
+        user: emp._id,
+        date: today
+      });
+
+      if (!recordExists) {
+        await Attendance.create({
+          user: emp._id,
+          date: today,
+          punchIn: null,
+          punchOut: null,
+          status: "absent",
+          type: "leave",
+          totalWorkingHours: 0,
+          totalBreakMinutes: 0
+        });
+      }
+    }
+
+    console.log("Absent entries created for employees who didn’t punch in.");
+  } catch (err) {
+    console.error("Error in cron job:", err);
+  }
+});
+
 
 module.exports = startCronJobs;

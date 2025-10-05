@@ -42,7 +42,7 @@ const createFollowUp = async (req, res) => {
     const { email, salesPerson, assignedService, name, phone, address, notes } = req.body;
 
     // 1️⃣ Check if any followups exist for this email
-    const existingFollowUps = await FollowUp.find({ email }).populate("salesPerson");
+    const existingFollowUps = await FollowUp.find({ phone }).populate("salesPerson");
 
     if (existingFollowUps.length > 0) {
       // Check if same-service followup already exists

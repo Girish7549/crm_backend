@@ -807,7 +807,7 @@ const updateSale = async (req, res) => {
         )
       ),
     ];
-    if(updateData?.saleItems?.length > 0){
+    if (updateData?.saleItems?.length > 0) {
       updateData.paymentMethod = uniquePaymentMethods.join(" / ");
     }
 
@@ -1322,7 +1322,7 @@ const renewSale = async (req, res) => {
     if (
       activation &&
       activation.deviceInfo.deviceType.trim().toLowerCase() ===
-        targetDevice.deviceType.trim().toLowerCase()
+      targetDevice.deviceType.trim().toLowerCase()
     ) {
       activation.currentMonth = 999;
       const deviceInfoUpdated = {
@@ -1557,18 +1557,25 @@ const sendEmail = async (req, res) => {
            </tr>
    
            <!-- Greeting -->
+          <!-- Greeting -->
            <tr>
              <td style="padding:28px 24px 8px 24px;">
                <div style="font:700 20px/1.3 Arial,Helvetica,sans-serif;color:#111827;">Dear ${name},</div>
                <div style="height:8px;"></div>
                <div style="font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#374151;">
-                 Thank you for choosing <strong>${company.slice(
-                   0,
-                   -2
-                 )}</strong>. Below are your subscription details and invoice summary.
+                 Thank you for choosing <strong>${company.slice(0, -2)}</strong>. Below are your subscription details and invoice summary.
+               </div>
+               
+               <!-- New dashboard info section -->
+               <div style="margin-top:16px;font:400 14px/1.7 Arial,Helvetica,sans-serif;color:#374151;">
+                 You can access your dashboard at 
+                 <a href="https://account.deemandtv.com" style="color:#2563eb;text-decoration:none;">account.deemandtv.com</a>.<br/>
+                 Your login credentials are:<br/>
+                 <strong>Email:</strong> ${email}<br/>
                </div>
              </td>
            </tr>
+
    
            <!-- Plan Details -->
            <tr>
@@ -1629,11 +1636,9 @@ const sendEmail = async (req, res) => {
       )}. All rights reserved.
                    </td>
                    <td align="right" style="font:400 12px Arial,Helvetica,sans-serif;">
-                     <a href="mailto:${
-                       process.env.SMTP_USER
-                     }" style="color:#d1d5db;text-decoration:none;">${
-        process.env.SMTP_USER
-      }</a> &nbsp;|&nbsp; 
+                     <a href="mailto:${process.env.SMTP_USER
+        }" style="color:#d1d5db;text-decoration:none;">${process.env.SMTP_USER
+        }</a> &nbsp;|&nbsp; 
                    </td>
                  </tr>
                </table>

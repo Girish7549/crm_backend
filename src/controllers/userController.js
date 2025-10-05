@@ -5,8 +5,12 @@ require("dotenv").config();
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, assignedService, team, gender } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { name, email, phone, salary, password, role, assignedService, department = '', designation = '', team, gender, branchName, bankAccNumber, ifscCode, bankName } = req.body;
+    let hashedPassword
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+
+    }
     console.log("password :", password);
     console.log("hashedPassword :", hashedPassword);
 
@@ -21,14 +25,13 @@ const createUser = async (req, res) => {
 
     const newUser = new User({
       empId,
-      name,
-      email,
-      gender,
-      password: hashedPassword,
-      originalPassword: password,
-      role,
+      name, email, phone, gender, role, team,
+      department, designation,
       assignedService,
-      team,
+      salary,
+      branchName, bankAccNumber, ifscCode, bankName,
+      password: hashedPassword,
+      originalPassword: password
     });
     await newUser.save();
     res.status(200).json({
@@ -89,6 +92,8 @@ const getAllUser = async (req, res) => {
         path: "assignedService",
         populate: { path: "manager" },
       })
+      .populate("department")
+      .populate("designation")
       .populate("team");
     res.status(200).json({
       success: true,
