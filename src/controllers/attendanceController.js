@@ -2,44 +2,133 @@ const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 
 // Punch In
+// const punchIn = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
+
+//     let record = await Attendance.findOne({ user: userId, date: today });
+//     if (record) {
+//       return res.status(400).json({ message: "Already punched in today" });
+//     }
+
+//     record = new Attendance({
+//       user: userId,
+//       date: today,
+//       punchIn: new Date(),
+//     });
+
+//     await record.save();
+//     res.json(record);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+// // Punch Out
+// const punchOut = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
+
+//     const record = await Attendance.findOne({ user: userId, date: today });
+//     if (!record) return res.status(404).json({ message: "Not punched in today" });
+
+//     record.punchOut = new Date();
+
+//     // Calculate break minutes
+//     let breakMinutes = 0;
+//     if (record.break1Start && record.break1End)
+//       breakMinutes += (record.break1End - record.break1Start) / (1000 * 60);
+//     if (record.lunchStart && record.lunchEnd)
+//       breakMinutes += (record.lunchEnd - record.lunchStart) / (1000 * 60);
+//     if (record.break2Start && record.break2End)
+//       breakMinutes += (record.break2End - record.break2Start) / (1000 * 60);
+
+//     record.totalBreakMinutes = Math.round(breakMinutes);
+
+//     // Calculate working hours
+//     const totalHours =
+//       (record.punchOut - record.punchIn) / (1000 * 60 * 60);
+//     record.totalWorkingHours = parseFloat(
+//       (totalHours - breakMinutes / 60).toFixed(2)
+//     );
+
+//     await record.save();
+//     res.json(record);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+
+// 🕘 Punch In
 const punchIn = async (req, res) => {
   try {
     const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
 
-    let record = await Attendance.findOne({ user: userId, date: today });
-    if (record) {
-      return res.status(400).json({ message: "Already punched in today" });
+    // 1️⃣ Check if there's already an open record (punched in but not out)
+    const openRecord = await Attendance.findOne({
+      user: userId,
+      punchOut: { $exists: false },
+    });
+
+    if (openRecord) {
+      return res.status(400).json({ message: "You are already punched in" });
     }
 
-    record = new Attendance({
+    // 2️⃣ Determine attendance date (shift start date)
+    // If punchIn after midnight but before 6 AM, consider it part of previous day’s shift
+    const attendanceDate = new Date(now);
+    if (now.getHours() < 6) {
+      attendanceDate.setDate(attendanceDate.getDate() - 1);
+    }
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    // 3️⃣ Create new attendance record
+    const record = new Attendance({
       user: userId,
-      date: today,
-      punchIn: new Date(),
+      date: attendanceDate, // base attendance date
+      punchIn: now,
     });
 
     await record.save();
-    res.json(record);
+    res.json({ message: "Punch-in recorded", record });
   } catch (err) {
+    console.error("Punch-in error:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-// Punch Out
+
+// 🕕 Punch Out
 const punchOut = async (req, res) => {
   try {
     const { userId } = req.body;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    if (!userId) return res.status(400).json({ message: "userId is required" });
 
-    const record = await Attendance.findOne({ user: userId, date: today });
-    if (!record) return res.status(404).json({ message: "Not punched in today" });
+    const now = new Date();
 
-    record.punchOut = new Date();
+    // 1️⃣ Find the most recent open attendance (not punched out yet)
+    const record = await Attendance.findOne({
+      user: userId,
+      punchOut: { $exists: false },
+    }).sort({ punchIn: -1 });
 
-    // Calculate break minutes
+    if (!record) {
+      return res.status(404).json({ message: "No active punch-in found" });
+    }
+
+    // 2️⃣ Assign punchOut
+    record.punchOut = now;
+
+    // 3️⃣ Calculate total break time (optional fields)
     let breakMinutes = 0;
     if (record.break1Start && record.break1End)
       breakMinutes += (record.break1End - record.break1Start) / (1000 * 60);
@@ -50,19 +139,22 @@ const punchOut = async (req, res) => {
 
     record.totalBreakMinutes = Math.round(breakMinutes);
 
-    // Calculate working hours
-    const totalHours =
-      (record.punchOut - record.punchIn) / (1000 * 60 * 60);
+    // 4️⃣ Calculate working hours (cross-day safe)
+    const totalHours = (record.punchOut - record.punchIn) / (1000 * 60 * 60);
     record.totalWorkingHours = parseFloat(
       (totalHours - breakMinutes / 60).toFixed(2)
     );
 
     await record.save();
-    res.json(record);
+    res.json({ message: "Punch-out recorded", record });
   } catch (err) {
+    console.error("Punch-out error:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
+module.exports = { punchIn, punchOut };
+
 
 // Break Start
 const startBreak = async (req, res) => {
