@@ -109,38 +109,35 @@ const startCronJobs = () => {
 
 
 // Cron job: run at 6:05 AM every day (after night shift ends)
-cron.schedule("5 6 * * *", async () => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // reset to start of day
+// cron.schedule("30 8 * * *", async () => {
+//   try {
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
 
-    const employees = await User.find(); // no active check
+//     const employees = await User.find();
 
-    for (const emp of employees) {
-      const recordExists = await Attendance.findOne({
-        user: emp._id,
-        date: today
-      });
+//     for (const emp of employees) {
+//       const record = await Attendance.findOne({ user: emp._id, date: today });
+//       if (!record) {
+//         await Attendance.create({
+//           user: emp._id,
+//           date: today,
+//           status: "absent",
+//           type: "leave",
+//           punchIn: null,
+//           punchOut: null,
+//           totalWorkingHours: 0,
+//           totalBreakMinutes: 0,
+//         });
+//       }
+//     }
 
-      if (!recordExists) {
-        await Attendance.create({
-          user: emp._id,
-          date: today,
-          punchIn: null,
-          punchOut: null,
-          status: "absent",
-          type: "leave",
-          totalWorkingHours: 0,
-          totalBreakMinutes: 0
-        });
-      }
-    }
+//     console.log("✅ Absent entries created (after all shifts end)");
+//   } catch (err) {
+//     console.error("❌ Cron error:", err);
+//   }
+// });
 
-    console.log("Absent entries created for employees who didn’t punch in.");
-  } catch (err) {
-    console.error("Error in cron job:", err);
-  }
-});
 
 
 module.exports = startCronJobs;

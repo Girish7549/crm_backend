@@ -24,8 +24,14 @@ const AttendanceSchema = new mongoose.Schema({
   totalWorkingHours: { type: Number, default: 0 },
   totalBreakMinutes: { type: Number, default: 0 },
 
-  type: { type: String , default: 'half-day'},
-  status: { type: String , default: 'present'},
+  type: { type: String, default: 'half-day' },
+  status: { type: String, default: 'present' },
+
+  shiftType: {
+    type: String,
+    enum: ["morning", "night"],
+    default: "morning",
+  },
 
   createdAt: { type: Date, default: Date.now },
 });

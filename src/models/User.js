@@ -30,6 +30,11 @@ const UserSchema = new mongoose.Schema({
     enum: ["male", "female"],
     required: true,
   },
+  shiftType: {
+    type: String,
+    enum: ["morning", "night"],
+    default: "morning",
+  },
   assignedService: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
