@@ -41,7 +41,7 @@ const { createPayment, getPayments, getPaymentById, deletePaymentById } = requir
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
 const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updatePaymentMethod, deletePaymentMethod, getPaymentMethodsByCompanyId } = require("../controllers/PaymentMethodController");
 const { createInvoice, getInvoices, getInvoiceById, getInvoicesByCompany, updateInvoice, deleteInvoice } = require("../controllers/InvoiceController");
-const { calculateSalary } = require("../controllers/salaryController");
+const { calculateSalary, generateSalary, getSalaries } = require("../controllers/salaryController");
 const { sendOtp, verifyOtp } = require("../controllers/otpController");
 const { createReferral, getReferrals, getReferralsByCustomer, getReferral, updateReferral, deleteReferral, markReferralPaid } = require("../controllers/ReferralController");
 const { generateReferralLink, getReferralDetails, getCustomerReferrals, deleteReferralLink } = require("../controllers/RefferalLinkController");
@@ -80,7 +80,11 @@ router.put("/attendance/:id/tag", tagAttendance);  // Tag attendance manually (F
 
 
 // Salary
-router.get("/salary/calc", calculateSalary);
+// router.get("/salary/calc", calculateSalary);
+// POST - Generate salary
+router.post("/salary/generate", generateSalary);
+// GET - Get salary records (with filters)
+router.get("/salary", getSalaries);
 
 
 // Customer Routes

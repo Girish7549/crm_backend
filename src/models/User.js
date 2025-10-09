@@ -35,6 +35,10 @@ const UserSchema = new mongoose.Schema({
     enum: ["morning", "night"],
     default: "morning",
   },
+  status: {
+    type: String,
+    enum: ["active", "inactive"]
+  },
   assignedService: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
