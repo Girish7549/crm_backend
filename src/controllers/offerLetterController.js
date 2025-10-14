@@ -1227,7 +1227,7 @@ We assure you of our support for your professional development and growth.
         doc.font("Helvetica-Bold").text("8. Remuneration:");
         doc.moveDown(0.5);
         doc.font("Helvetica").text(
-            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs.19000/-`,
+            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs. ${user.salary}/-`,
             { align: "justify", lineGap: 4 }
         );
         doc.moveDown(0.5);
