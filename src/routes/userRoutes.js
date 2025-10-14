@@ -41,12 +41,13 @@ const { createPayment, getPayments, getPaymentById, deletePaymentById } = requir
 const { getAllAccounts, getAccountByCompany, getAccountById, createAccount, updateAccount, deleteAccount } = require("../controllers/AccountPaymentWebController");
 const { createPaymentMethod, getAllPaymentMethods, getPaymentMethodById, updatePaymentMethod, deletePaymentMethod, getPaymentMethodsByCompanyId } = require("../controllers/PaymentMethodController");
 const { createInvoice, getInvoices, getInvoiceById, getInvoicesByCompany, updateInvoice, deleteInvoice } = require("../controllers/InvoiceController");
-const { calculateSalary, generateSalary, getSalaries } = require("../controllers/salaryController");
+const { calculateSalary, generateSalary, getSalaries, generatePayslipPDF, sendPayslipEmail } = require("../controllers/salaryController");
 const { sendOtp, verifyOtp } = require("../controllers/otpController");
 const { createReferral, getReferrals, getReferralsByCustomer, getReferral, updateReferral, deleteReferral, markReferralPaid } = require("../controllers/ReferralController");
 const { generateReferralLink, getReferralDetails, getCustomerReferrals, deleteReferralLink } = require("../controllers/RefferalLinkController");
 const { createDepartment, getDepartments, getDepartmentById, updateDepartment, deleteDepartment } = require("../controllers/DepartmentController");
 const { createDesignation, getDesignations, getDesignationById, updateDesignation, deleteDesignation } = require("../controllers/DesignationController");
+const { createOfferLetter, getOfferLetters, getOfferLetterById, updateOfferLetter, deleteOfferLetter, generateOfferLetter, generateAndDownloadOfferLetter } = require("../controllers/offerLetterController");
 
 // Service Routes
 router.post("/service", createService);
@@ -80,12 +81,19 @@ router.put("/attendance/:id/tag", tagAttendance);  // Tag attendance manually (F
 
 
 // Salary
-// router.get("/salary/calc", calculateSalary);
-// POST - Generate salary
 router.post("/salary/generate", generateSalary);
-// GET - Get salary records (with filters)
 router.get("/salary", getSalaries);
+router.get("/salary/payslip/:salaryId", generatePayslipPDF);
+router.get("/salary/send-payslip/:salaryId", sendPayslipEmail);
 
+// Offer Letter
+router.post("/generateOfferLetter", generateOfferLetter);
+router.post("/downloadOfferLetter", generateAndDownloadOfferLetter);
+router.post("/offerLetter", upload.fields([{ name: "signtory", maxCount: 1 }]), createOfferLetter);
+router.get("/offerLetter", getOfferLetters);
+router.get("/offerLetter/:id", getOfferLetterById);
+router.put("/offerLetter/:id", upload.fields([{ name: "signtory", maxCount: 1 }]), updateOfferLetter);
+router.delete("/offerLetter/:id", deleteOfferLetter);
 
 // Customer Routes
 router.get("/customer", getCustomer);
