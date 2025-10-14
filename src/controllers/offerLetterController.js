@@ -1081,7 +1081,7 @@ We assure you of our support for your professional development and growth.
         doc.moveDown(0.5);
 
         doc.text(
-            `${user.name}, (hereinafter referred to as the "Employee"), D/o ${user.father || "Anil Jha"}, residing at ${user.address || "User Address"}, collectively referred to as the "Parties".`,
+            `${user.name}, (hereinafter referred to as the "Employee"), ${user.gender === 'male' ? 'S/o' : 'D/o'} ${user.father || "_______"}, residing at ${user.address || "User Address"}, collectively referred to as the "Parties".`,
             { align: "justify", lineGap: 4 }
         );
 
