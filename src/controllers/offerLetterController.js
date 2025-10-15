@@ -329,7 +329,7 @@ We assure you of our support for your professional development and growth.
 
 const generateOfferLetter = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const { userId , date} = req.body;
         if (!userId) return res.status(400).json({ success: false, message: "userId is required" });
 
         const user = await User.findById(userId)
