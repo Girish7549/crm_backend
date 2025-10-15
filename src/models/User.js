@@ -10,10 +10,9 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
-  officialMail: {
-    type: String,
-    required: true,
-  },
+  // officialMail: {
+  //   type: String,
+  // },
   phone: {
     type: String
   },
