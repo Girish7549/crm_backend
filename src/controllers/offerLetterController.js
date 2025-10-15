@@ -912,7 +912,7 @@ We assure you of our support for your professional development and growth.
 
             const mailOptions = {
                 from: `"HR Department" <${process.env.FROM_EMAIL}>`,
-                to: user.email,
+                to: user.officialMail,
                 subject: "Your Offer Letter - AdzDrio India Services Pvt. Ltd",
                 html: `
                     <p>Dear ${user.name},</p>
@@ -985,12 +985,16 @@ const generateAndDownloadOfferLetter = async (req, res) => {
 
         doc.moveDown(6);
 
+        const joinDate1 = new Date(date); // assuming 'date' is a string
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        const formattedDate = joinDate1.toLocaleDateString('en-GB', options);
+
         // 3️⃣ Address & Date
         doc.fillColor("black").font("Helvetica").fontSize(10);
         doc.text(`Add: ${user.address || "User address"},`, 50, 160);
         // doc.text(`Bihar - ${user.pincode || "000000"}`);
 
-        doc.font("Helvetica-Bold").text(date , 50, 160, {
+        doc.font("Helvetica-Bold").text(formattedDate, 50, 160, {
             align: "right",
         });
 
@@ -1001,7 +1005,8 @@ const generateAndDownloadOfferLetter = async (req, res) => {
         doc.moveDown(1);
 
         // 5️⃣ Letter Body (Page 1)
-        const joinDate = date;
+
+        const joinDate = formattedDate;
         const letterBody = `
 Dear ${user.name},
 
@@ -1050,13 +1055,13 @@ We assure you of our support for your professional development and growth.
         // Reversed header image (same as footer, flipped)
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
         doc.restore();
 
-        doc.moveDown(6); // add spacing after header
+        doc.moveDown(3); // add spacing after header
 
         // Title
         doc.font("Helvetica-Bold").fontSize(13).text("CONTRACT OF EMPLOYMENT", {
@@ -1146,6 +1151,7 @@ We assure you of our support for your professional development and growth.
         // doc.font("Helvetica-Bold").text("Arun Yadav");
         // doc.font("Helvetica").text("M. Director");
         // doc.font("Helvetica-Oblique").text("[Authorized Signatory]");
+        // doc.font("#Place : ${`baseUrl/api/user.address`} ")
 
 
         // doc.font("Helvetica").fontSize(11).text(contractBody, {
@@ -1173,7 +1179,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -1248,7 +1254,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -1318,7 +1324,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -1392,7 +1398,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -1449,7 +1455,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
