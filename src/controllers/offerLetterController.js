@@ -366,12 +366,16 @@ const generateOfferLetter = async (req, res) => {
 
         doc.moveDown(6);
 
+        const joinDate1 = new Date(date); // assuming 'date' is a string
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        const formattedDate = joinDate1.toLocaleDateString('en-GB', options);
+
+
         // 3️⃣ Address & Date
         doc.fillColor("black").font("Helvetica").fontSize(10);
         doc.text(`Add: ${user.address || "User address"},`, 50, 160);
-        doc.text(`Bihar - ${user.pincode || "000000"}`);
 
-        doc.font("Helvetica-Bold").text("October 11, 2025", 50, 160, {
+        doc.font("Helvetica-Bold").text(formattedDate, 50, 160, {
             align: "right",
         });
 
@@ -382,7 +386,7 @@ const generateOfferLetter = async (req, res) => {
         doc.moveDown(1);
 
         // 5️⃣ Letter Body (Page 1)
-        const joinDate = "03 September 2025";
+        const joinDate = formattedDate;
         const letterBody = `
 Dear ${user.name},
 
@@ -431,7 +435,7 @@ We assure you of our support for your professional development and growth.
         // Reversed header image (same as footer, flipped)
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -462,7 +466,7 @@ We assure you of our support for your professional development and growth.
         doc.moveDown(0.5);
 
         doc.text(
-            `${user.name}, (hereinafter referred to as the "Employee"), D/o ${user.fatherName || "Anil Jha"}, residing at ${user.address || "User Address"}, collectively referred to as the "Parties".`,
+            `${user.name}, (hereinafter referred to as the "Employee"),  ${user.gender === 'male' ? 'S/o' : 'D/o'} ${user.father || "_______"}, residing at ${user.address || "User Address"}, collectively referred to as the "Parties".`,
             { align: "justify", lineGap: 4 }
         );
 
@@ -554,7 +558,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -608,7 +612,7 @@ We assure you of our support for your professional development and growth.
         doc.font("Helvetica-Bold").text("8. Remuneration:");
         doc.moveDown(0.5);
         doc.font("Helvetica").text(
-            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs.19000/-`,
+            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs.${user.salary}/-`,
             { align: "justify", lineGap: 4 }
         );
         doc.moveDown(0.5);
@@ -699,7 +703,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -773,7 +777,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -830,7 +834,7 @@ We assure you of our support for your professional development and growth.
         // Add reversed header image again
         doc.save();
         doc.transform(1, 0, 0, -1, 0, 50);
-        doc.image(footerImagePath, 0, -50, {
+        doc.image(footerImagePath, 0, 0, {
             width: doc.page.width,
             height: 50,
         });
@@ -1233,7 +1237,7 @@ We assure you of our support for your professional development and growth.
         doc.font("Helvetica-Bold").text("8. Remuneration:");
         doc.moveDown(0.5);
         doc.font("Helvetica").text(
-            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs. ${user.salary}/-`,
+            `The EMPLOYEE will be entitled to the following remuneration: A monthly stipend of Rs.${user.salary}/-`,
             { align: "justify", lineGap: 4 }
         );
         doc.moveDown(0.5);
