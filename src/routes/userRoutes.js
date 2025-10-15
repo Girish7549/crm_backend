@@ -192,10 +192,10 @@ router.post("/chat", createMessage);
 router.delete("/chat/:id", deleteMessage);
 
 // Personal Chat
-router.get("/personal", getPersonalMessage);   // Admin/debug: get ALL personal messages
-router.get("/personal/:userId/:receiverId", getPersonalChat);  // Get chat between two users (optionally constrain with ?teamId=xxxx)
-router.get("/personal/team/:teamId", getTeamDMs);  // Get all DMs for a team (support inbox)
-router.post("/personal", createPersonalMessage);   // Create a DM (enforces same-team)
+router.get("/personal", getPersonalMessage);   
+router.get("/personal/:userId/:receiverId", getPersonalChat);  
+router.get("/personal/team/:teamId", getTeamDMs);  
+router.post("/personal", createPersonalMessage);   
 
 // Mac-Address
 router.post("/macAddress", createMacAddress);

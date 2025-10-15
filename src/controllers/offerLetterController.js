@@ -390,7 +390,7 @@ const generateOfferLetter = async (req, res) => {
         const letterBody = `
 Dear ${user.name},
 
-We are pleased to appoint you to our organization as an Associate in the ${user.department?.name || "____"} department of the company w.e.f ${joinDate}. On the following terms and conditions are given below.
+We are pleased to appoint you to our organization as an Associate in the ${user.department?.name || "____"} department of the company w.e.f. ${joinDate}. On the following terms and conditions are given below.
 
 Your employment with us will be governed by the Terms & Conditions as detailed below.
 
