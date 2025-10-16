@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 });
 
 
-const sendOtp = async (req, res) => {
+const sendOtpOLD = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -74,6 +74,67 @@ const sendOtp = async (req, res) => {
     }
 };
 
+const sendOtp = async (req, res) => {
+    try {
+        const { email, serviceId } = req.body;
+
+        if (!email || !serviceId) {
+            return res.status(400).json({ error: "Email and Service ID are required" });
+        }
+
+        // Find customer based on email + purchasedService
+        let customer = await Customer.findOne({
+            email,
+            purchasedService: serviceId,
+        });
+
+        // If no customer, create one (optional)
+        if (!customer) {
+            customer = new Customer({
+                email,
+                name: "New User",
+                purchasedService: serviceId,
+            });
+            await customer.save();
+        }
+
+        // Generate OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Remove any old OTPs for that same customer
+        await Otp.deleteMany({ customer: customer._id });
+
+        // Create new OTP record
+        await Otp.create({
+            customer: customer._id,
+            code: otpCode,
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        });
+
+        // Send OTP email
+        await transporter.sendMail({
+            from: `"${process.env.FROM_NAME_OTP}" <${process.env.FROM_EMAIL_OTP}>`,
+            to: email, // ✅ send to actual customer email
+            subject: "Your Dashboard Authentication Code",
+            html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #0d6efd;">Deemand Service</h2>
+          <p>Hello ${customer.name || "Customer"},</p>
+          <p>Use the following authentication code to complete your login:</p>
+          <h1 style="letter-spacing: 5px; color: #0d6efd;">${otpCode}</h1>
+          <p>This code is valid for 5 minutes.</p>
+          <p>If you did not request this, please ignore this email.</p>
+        </div>
+      `,
+        });
+
+        res.json({ message: "OTP sent successfully" });
+    } catch (err) {
+        console.error("sendOtp error:", err);
+        res.status(500).json({ error: "Failed to send OTP" });
+    }
+};
+
 // const verifyOtp = async (req, res) => {
 //     try {
 //         const { email, otp } = req.body;
@@ -103,7 +164,7 @@ const sendOtp = async (req, res) => {
 // };
 
 
-const verifyOtp = async (req, res) => {
+const verifyOtpOLD = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
@@ -182,5 +243,93 @@ const verifyOtp = async (req, res) => {
             .json({ error: "Failed to verify OTP. Please try again later." });
     }
 };
+const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp, serviceId } = req.body;
+
+    if (!email || !otp || !serviceId) {
+      return res
+        .status(400)
+        .json({ error: "Email, OTP, and Service ID are required" });
+    }
+
+    const customer = await Customer.findOne({
+      email,
+      purchasedService: serviceId,
+    });
+
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found for this service" });
+    }
+
+    const otpRecord = await Otp.findOne({
+      customer: customer._id,
+      code: otp,
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    if (otpRecord.expiresAt < Date.now()) {
+      return res.status(400).json({ error: "OTP expired" });
+    }
+
+    // ✅ delete OTP after verification
+    await Otp.deleteMany({ customer: customer._id });
+
+    // ✅ fetch related sales only for that service
+    const sales = await Sale.find({
+      customer: customer._id,
+      service: serviceId,
+    }).sort({ createdAt: -1 });
+
+    const planDetails = [];
+
+    sales.forEach((sale) => {
+      sale.saleItems.forEach((item) => {
+        item.devices.forEach((device) => {
+          const planStart = device.createdAt || sale.createdAt;
+          const durationMonths = device.month || 0;
+
+          const expirationDate = new Date(planStart);
+          expirationDate.setMonth(expirationDate.getMonth() + durationMonths);
+
+          const totalDays = Math.ceil(
+            (expirationDate - planStart) / (1000 * 60 * 60 * 24)
+          );
+          const remainingDays = Math.max(
+            0,
+            Math.ceil((expirationDate - Date.now()) / (1000 * 60 * 60 * 24))
+          );
+
+          planDetails.push({
+            plan: item.plan,
+            deviceType: device.deviceType,
+            customPrice: device.customPrice,
+            paymentMethod: device.paymentMethod,
+            status: sale.status,
+            startDate: planStart,
+            expirationDate,
+            totalDays,
+            remainingDays,
+          });
+        });
+      });
+    });
+
+    const customerData = customer.toObject();
+    customerData.planDetails = planDetails;
+
+    res.json({
+      message: "OTP verified successfully",
+      customerData,
+    });
+  } catch (err) {
+    console.error("verifyOtp error:", err);
+    res.status(500).json({ error: "Failed to verify OTP" });
+  }
+};
+
 
 module.exports = { sendOtp, verifyOtp };
