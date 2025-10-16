@@ -114,17 +114,33 @@ const sendOtp = async (req, res) => {
         // Send OTP email
         await transporter.sendMail({
             from: `"${process.env.FROM_NAME_OTP}" <${process.env.FROM_EMAIL_OTP}>`,
-            to: 'hp.code7@gmail.com', // ✅ send to actual customer email
+            to: email,
             subject: "Your Dashboard Authentication Code",
             html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2 style="color: #0d6efd;">Deemand Service</h2>
-          <p>Hello ${customer.name || "Customer"},</p>
-          <p>Use the following authentication code to complete your login:</p>
-          <h1 style="letter-spacing: 5px; color: #0d6efd;">${otpCode}</h1>
-          <p>This code is valid for 5 minutes.</p>
-          <p>If you did not request this, please ignore this email.</p>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Your OTP Code</title>
+      </head>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f4f4f4; margin:0; padding:0;">
+        <div style="max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); overflow:hidden; padding:0;">
+          <div style="background-color:#0d6efd; color:#ffffff; text-align:center; padding:25px; font-size:28px; font-weight:bold;">Deemand Service</div>
+          <div style="padding:30px 20px; text-align:center;">
+            <p style="font-size:16px; color:#555;">Hello ${customer.name || "Customer"},</p>
+            <p style="font-size:16px; color:#555;">Use the following authentication code to complete your login. This code is valid for 5 minutes only.</p>
+             <div style="text-align:center; margin:20px 0;">
+           <span style=" display:inline-block; font-size:36px; font-weight:bold; color:#0d6efd; letter-spacing:6px; padding:15px 30px; border:2px dashed #0d6efd; border-radius:8px; margin-bottom:15px;">
+           ${otpCode}</span><br></div>
+          </div>
+            <p style="font-size:16px; color:#555; margin-top:25px;">If you did not request this code, please ignore this email.</p>
+          <div style="background-color:#f4f4f4; padding:20px; text-align:center; font-size:12px; color:#888;">
+            &copy; 2025 Deemand TV. All rights reserved.<br>
+          </div>
         </div>
+      </body>
+      </html>
       `,
         });
 
