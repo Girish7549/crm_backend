@@ -627,6 +627,75 @@ const getSalesByTeam = async (req, res) => {
   }
 };
 
+const getTeamSalesFiltered = async (req, res) => {
+  try {
+    const { employee = "all", status = "all", search = "" } = req.query;
+    const { teamId, service } = req.params || {};
+
+    const teamObjectId = new mongoose.Types.ObjectId(teamId);
+    const serviceObjectId = new mongoose.Types.ObjectId(service?._id || service);
+    // console.log("teamObjectId ids :", teamObjectId, teamId)
+    // console.log("serviceObjectId ids :", serviceObjectId, service?._id)
+
+    const teamAgents = await User.find({
+      role: "sales_agent",
+      team: teamObjectId,
+      // assignedService: serviceObjectId,
+    }).select("_id name");
+
+    // console.log("Team ids :", teamAgents)
+
+    const userIds = teamAgents.map((u) => u._id);
+    // console.log("user ids :", userIds)
+
+    const matchFilter = {
+      assignedEmployee: { $in: userIds },
+    };
+    // console.log("match Filter :", matchFilter)
+
+    if (employee !== "all") {
+      matchFilter.assignedEmployee = new mongoose.Types.ObjectId(employee);
+    }
+
+    if (status !== "all") {
+      matchFilter.status = status;
+    }
+
+    if (search) {
+      matchFilter.$or = [
+        { "customer.name": { $regex: search, $options: "i" } },
+        { "customer.phone": { $regex: search, $options: "i" } },
+      ];
+    }
+    /* 
+    if(employee.isOnline === true ? <Loading/> : <div>
+     const mixData = employee.status.map(m => ({ label: m.name, value: m.id}))
+     const request = await fetch(`${baseUrl}/emp-status/${mixData}`)
+     const response = await request.json()
+     h ijsdj in he is the only guys that work in that company last 2 year also they have 300+ customer sale experiance in the market 
+     </div>
+    )
+    */
+    const sales = await Sales.find(matchFilter)
+      .populate("customer", "name phone email")
+      .populate("service", "name")
+      .populate("assignedEmployee", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      sales,
+    });
+  } catch (err) {
+    console.error("Error fetching team sales:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
 const getTeamPendingSale = async (req, res) => {
   try {
     const teamId = req.params.id?.trim();
@@ -1802,6 +1871,7 @@ module.exports = {
   updateSale,
   deleteSale,
   getSalesByTeam,
+  getTeamSalesFiltered,
   renewSale,
   sendEmail,
 };

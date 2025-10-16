@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { createUser, getUser, getAllUser, deleteUser, updateUser, searchUser } = require("../controllers/userController");
+const { createUser, getUser, getAllUser, deleteUser, updateUser, searchUser, getTeamMembers } = require("../controllers/userController");
 
 const { createService, getService, updateService, deleteService } = require("../controllers/serviceController");
 
@@ -8,7 +8,7 @@ const { login } = require("../controllers/authController");
 
 const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getEmpCustomer, createRefferedCustomer, getEmpCustomerNotSale, searchCustomer, uploadProfile, getCustomerById } = require("../controllers/customerController");
 
-const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail } = require("../controllers/saleController");
+const { createSale, getAllSale, getSaleByEmp, updateSale, deleteSale, getSalesByTeam, getTeamPendingSale, getUnactivatedSalesByTeam, searchSalesByPhone, getSalesByEmployeeAndDateRange, searchAllSalesByPhone, renewSale, sendEmail, getTeamSalesFiltered } = require("../controllers/saleController");
 
 const { createFollowUp, getAllFollowUps, getFollowUpById, deleteFollowUp, updateFollowUp, getFollowUpsByServiceId } = require("../controllers/followupController");
 
@@ -63,6 +63,8 @@ router.put("/user/:id", updateUser);
 router.post("/register", createUser);
 router.post("/login", login);
 router.delete("/user/:id", deleteUser);
+router.get("/team-members/:teamId", getTeamMembers);
+
 
 // Attendence Routes
 // router.post("/attendance", createAttendence);
@@ -136,6 +138,7 @@ router.get("/teams", getAllTeams);
 router.get("/sales", getAllSale);
 // router.get("/sales/team/:id", getSalesByTeam);
 router.get("/sales/company/:companyId/team/:teamId", getSalesByTeam);
+router.get("/sales/team/:teamId", getTeamSalesFiltered);
 router.get("/sales/employee/:id", getSaleByEmp);
 router.post("/sales/employee-date-range/:id", getSalesByEmployeeAndDateRange);
 router.get("/sales/team-pending/:id", getTeamPendingSale);
@@ -192,10 +195,10 @@ router.post("/chat", createMessage);
 router.delete("/chat/:id", deleteMessage);
 
 // Personal Chat
-router.get("/personal", getPersonalMessage);   
-router.get("/personal/:userId/:receiverId", getPersonalChat);  
-router.get("/personal/team/:teamId", getTeamDMs);  
-router.post("/personal", createPersonalMessage);   
+router.get("/personal", getPersonalMessage);
+router.get("/personal/:userId/:receiverId", getPersonalChat);
+router.get("/personal/team/:teamId", getTeamDMs);
+router.post("/personal", createPersonalMessage);
 
 // Mac-Address
 router.post("/macAddress", createMacAddress);

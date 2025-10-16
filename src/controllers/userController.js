@@ -25,7 +25,7 @@ const createUser = async (req, res) => {
 
     const newUser = new User({
       empId,
-      name, email, officialMail, phone, gender, role, team, status:'active',
+      name, email, officialMail, phone, gender, role, team, status: 'active',
       department, designation,
       assignedService,
       salary,
@@ -222,9 +222,42 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getTeamMembers = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    if (!teamId) {
+      return res.status(400).json({
+        success: false,
+        message: "Team ID is required",
+      });
+    }
+
+    const users = await User.find({
+      team: teamId,
+      role: { $in: ["sales_agent"] },
+      // status: "active",
+    }).select("name email _id role");
+
+    res.status(200).json({
+      success: true,
+      message: "Team members retrieved successfully",
+      users,
+    });
+  } catch (err) {
+    console.error("Error fetching team members:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch team members",
+    });
+  }
+};
+
+
 module.exports = {
   createUser,
   getAllUser,
+  getTeamMembers,
   getUser,
   updateUser,
   deleteUser,

