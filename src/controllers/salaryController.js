@@ -445,7 +445,7 @@ const sendPayslipEmail = async (req, res) => {
         // Mail options
         const mailOptions = {
             from: `"Deemand TV" <invoice@deemandtv.com>`,
-            to: user.email,
+            to: user.officialMail,
             subject: `Payslip for ${salary.month} ${salary.year}`,
             html: htmlContent,
             attachments: [
