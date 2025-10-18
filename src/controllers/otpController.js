@@ -82,24 +82,23 @@ const sendOtp = async (req, res) => {
             return res.status(400).json({ error: "Email and Service ID are required" });
         }
 
-        // Find customer based on email + purchasedService
         let customer = await Customer.findOne({
             email,
             purchasedService: serviceId,
         });
 
-        // If no customer, create one (optional)
-        if (!customer) {
-            customer = new Customer({
-                email,
-                name: "New User",
-                purchasedService: serviceId,
-            });
-            await customer.save();
-        }
+        // if (!customer) {
+        //     customer = new Customer({
+        //         email,
+        //         name: "New User",
+        //         purchasedService: serviceId,
+        //     });
+        //     await customer.save();
+        // }
 
         // Generate OTP
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log("Customer ----------------> ", customer)
 
         // Remove any old OTPs for that same customer
         await Otp.deleteMany({ customer: customer._id });

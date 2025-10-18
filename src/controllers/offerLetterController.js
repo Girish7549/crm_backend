@@ -329,7 +329,7 @@ We assure you of our support for your professional development and growth.
 
 const generateOfferLetter = async (req, res) => {
     try {
-        const { userId , date} = req.body;
+        const { userId, date } = req.body;
         if (!userId) return res.status(400).json({ success: false, message: "userId is required" });
 
         const user = await User.findById(userId)
@@ -410,8 +410,8 @@ We assure you of our support for your professional development and growth.
             lineGap: 4,
         });
 
-        doc.moveDown(4);
-        doc.font("Helvetica-Bold").text("Arun Yadav");
+        doc.moveDown(2);
+        doc.font("Helvetica-Bold").text(offerLetter.director);
         doc.font("Helvetica").text("M. Director");
 
         // Signature Image
@@ -868,12 +868,12 @@ We assure you of our support for your professional development and growth.
         doc.moveDown(2);
 
         // Date and Place
-        doc.font("Helvetica-Bold").text("Date: ", { continued: true }).font("Helvetica").text("03 Sep 2025");
-        doc.font("Helvetica-Bold").text("Place: ", { continued: true }).font("Helvetica").text("Noida");
+        doc.font("Helvetica-Bold").text("Date: ", { continued: true }).font("Helvetica").text(joinDate);
+        doc.font("Helvetica-Bold").text("Place: ", { continued: true }).font("Helvetica").text(offerLetter.address);
         doc.moveDown(1);
 
         // Employee name and signature
-        doc.font("Helvetica-Bold").text("Employee Name: ", { continued: true }).font("Helvetica").text("Ms. Puja Jha", { underline: true });
+        doc.font("Helvetica-Bold").text("Employee Name: ", { continued: true }).font("Helvetica").text(user.name, { underline: true });
         doc.font("Helvetica-Bold").text("Employee Signature:");
         doc.moveDown(3);
 
@@ -1572,7 +1572,7 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
 // ===== CREATE Offer Letter =====
 const createOfferLetter = async (req, res) => {
     try {
-        const { company, phone, email, website, address } = req.body;
+        const { company, director, phone, email, website, address } = req.body;
 
         if (!email) {
             return res.status(400).json({
@@ -1595,6 +1595,7 @@ const createOfferLetter = async (req, res) => {
 
         const newOfferLetter = new OfferLetter({
             company,
+            director,
             phone,
             email,
             website,
@@ -1668,6 +1669,7 @@ const updateOfferLetter = async (req, res) => {
     try {
         const {
             company,
+            director,
             phone,
             email,
             website,
@@ -1675,7 +1677,7 @@ const updateOfferLetter = async (req, res) => {
             existingSigntory,
         } = req.body;
 
-        const updateData = { company, phone, email, website, address };
+        const updateData = { company, director, phone, email, website, address };
 
         // Handle new signature upload
         if (req.files?.signtory?.length > 0) {

@@ -34,7 +34,7 @@ const { createTrialActivation, getAllTrialActivations, getTrialActivationById, u
 
 const { createMacAddress, deleteMacAddress, updateMacAddress, getMacAddressById, checkMacExists, getAllMacAddresses, emptyMacAddress } = require("../controllers/macAddressController");
 
-const { getActivationDashboard, getSaleDashboard, getAdminDashboard } = require("../controllers/dashboard");
+const { getActivationDashboard, getSaleDashboard, getAdminDashboard, getLockMonthProgress } = require("../controllers/dashboard");
 const { punchIn, punchOut, startBreak, endBreak, getAttendance, tagAttendance, upsertAttendance, deleteAttendance } = require("../controllers/attendanceController");
 const { getExecutiveStats } = require("../controllers/adminController");
 const { createPayment, getPayments, getPaymentById, deletePaymentById } = require("../controllers/paymentController");
@@ -48,6 +48,7 @@ const { generateReferralLink, getReferralDetails, getCustomerReferrals, deleteRe
 const { createDepartment, getDepartments, getDepartmentById, updateDepartment, deleteDepartment } = require("../controllers/DepartmentController");
 const { createDesignation, getDesignations, getDesignationById, updateDesignation, deleteDesignation } = require("../controllers/DesignationController");
 const { createOfferLetter, getOfferLetters, getOfferLetterById, updateOfferLetter, deleteOfferLetter, generateOfferLetter, generateAndDownloadOfferLetter } = require("../controllers/offerLetterController");
+const { createFeedback, getAllFeedbacks, getFeedbackByCustomer, deleteFeedback } = require("../controllers/feedbackController");
 
 // Service Routes
 router.post("/service", createService);
@@ -96,6 +97,12 @@ router.get("/offerLetter", getOfferLetters);
 router.get("/offerLetter/:id", getOfferLetterById);
 router.put("/offerLetter/:id", upload.fields([{ name: "signtory", maxCount: 1 }]), updateOfferLetter);
 router.delete("/offerLetter/:id", deleteOfferLetter);
+
+// Feedback Routes
+router.post("/feedback", createFeedback);
+router.get("/feedback", getAllFeedbacks);
+router.get("/feedback/customer/:customerId", getFeedbackByCustomer);
+router.delete("/feedback/:id", deleteFeedback);
 
 // Customer Routes
 router.get("/customer", getCustomer);
@@ -213,6 +220,8 @@ router.delete("/macAddress/:id", deleteMacAddress);
 router.get("/activationDashboard", getActivationDashboard);
 router.get("/saleDashboard/:id", getSaleDashboard);
 router.get("/adminDashboard", getAdminDashboard);
+router.get("/lock-progress/:customerId", getLockMonthProgress);
+
 
 // Admin Data
 router.get("/admin/employee-data/:id", getExecutiveStats);

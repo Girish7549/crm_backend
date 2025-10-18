@@ -26,6 +26,10 @@ const CustomerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
   },
+  termsAndCondition: {
+    type: Boolean,
+    default: false
+  },
   // subscription: {
   //     type: mongoose.Schema.Types.ObjectId,
   //     ref: "Subscription"
@@ -42,6 +46,12 @@ const CustomerSchema = new mongoose.Schema({
     ref: "Customer",
   },
   reffers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+    },
+  ],
+  usedReffers: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",

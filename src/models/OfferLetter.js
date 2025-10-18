@@ -5,6 +5,10 @@ const offerLetterSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Service",
     },
+    director: {
+        type: String,
+        trim: true,
+    },
     phone: {
         type: String,
         trim: true,

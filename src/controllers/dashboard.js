@@ -8,6 +8,7 @@ const Callback = require("../models/Callback");
 const Service = require("../models/Service");
 const User = require("../models/User");
 const Attendance = require("../models/Attendance");
+const Customer = require("../models/Customer");
 
 /* ================================
    1. Activation Dashboard
@@ -775,8 +776,144 @@ const getAdminDashboard = async (req, res) => {
   }
 };
 
+
+// Level configuration
+const LEVELS = [
+  { level: 1, referralsRequired: 10, monthsLimit: 5 },
+  { level: 2, referralsRequired: 16, monthsLimit: 8 },
+  { level: 3, referralsRequired: 24, monthsLimit: 12 },
+];
+
+// Helper to count months between two dates
+function monthsBetween(date1, date2) {
+  return (
+    (date2.getFullYear() - date1.getFullYear()) * 12 +
+    (date2.getMonth() - date1.getMonth())
+  );
+}
+
+
+const getLockMonthProgress = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    const customer = await Customer.findById(customerId)
+      .populate("reffers")
+      .populate("usedReffers");
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    // =========================
+    // 🔹 Fetch all sales for this customer
+    // =========================
+    const sales = await Sales.find({ customer: customerId });
+
+    // =========================
+    // 🔹 Calculate total locked months
+    // =========================
+    let totalLockedMonths = 0;
+    let detailedLocks = []; // optional — to show per-sale/device detail if needed
+
+    sales.forEach((sale) => {
+      sale.saleItems?.forEach((item) => {
+        item.devices?.forEach((device) => {
+          const lock = Number(device.lockMonth) || 0;
+          console.log("YE HAI Detail", device)
+          console.log("YE HAI LOCK MONTH", lock)
+          totalLockedMonths += lock;
+
+          detailedLocks.push({
+            saleId: sale._id,
+            plan: item.plan,
+            deviceType: device.deviceType,
+            lockMonth: lock,
+            createdAt: device.createdAt,
+          });
+        });
+      });
+    });
+
+    // =========================
+    // 🔹 Other Progress Calculations
+    // =========================
+    const createdAt = customer.createdAt;
+    const now = new Date();
+    const monthsActive = monthsBetween(createdAt, now);
+    const totalReferrals = customer.reffers.length;
+
+    let achievedLevel = 0;
+    let nextLevel = null;
+
+    for (const level of LEVELS) {
+      if (
+        totalReferrals >= level.referralsRequired &&
+        totalLockedMonths <= level.monthsLimit
+      ) {
+        achievedLevel = level.level;
+      } else if (totalReferrals < level.referralsRequired && !nextLevel) {
+        nextLevel = level;
+      }
+    }
+
+    // =========================
+    // 🔹 Status Messages
+    // =========================
+    let message = "";
+    let canAddMonth = false;
+    let allReferralsVanished = false;
+
+    if (achievedLevel === 0 && totalLockedMonths > LEVELS[0].monthsLimit) {
+      message =
+        "❌ Target not achieved — all referrals have vanished! No month will be added.";
+      allReferralsVanished = true;
+    } else if (achievedLevel > 0) {
+      message = `🎯 Level ${achievedLevel} unlocked! Contact Sales Executive to add your month.`;
+      canAddMonth = true;
+    }
+
+    // =========================
+    // 🔹 Lock/Unlock Logic
+    // =========================
+    const levelsStatus = LEVELS.map((lvl) => ({
+      level: lvl.level,
+      unlocked: lvl.level === achievedLevel,
+      locked: lvl.level < achievedLevel ? true : lvl.level > achievedLevel,
+      referralTarget: lvl.referralsRequired,
+      monthsLimit: lvl.monthsLimit,
+    }));
+
+    // =========================
+    // 🔹 Final Response
+    // =========================
+    const response = {
+      customer: {
+        id: customer._id,
+        name: customer.name,
+        totalReferrals,
+        monthsActive,
+        lockedMonths: totalLockedMonths,
+      },
+      achievedLevel,
+      nextLevel,
+      levelsStatus,
+      message,
+      canAddMonth,
+      allReferralsVanished,
+      detailedLocks, // optional for debugging or frontend visualization
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching lock month progress:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
 module.exports = {
   getActivationDashboard,
   getSaleDashboard,
   getAdminDashboard,
+  getLockMonthProgress
 };
