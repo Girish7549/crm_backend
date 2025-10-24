@@ -59,12 +59,12 @@ const OFFICE_LNG = 77.3186998;
 const OFFICE_RADIUS_METERS = 10;
 
 // AES decryption config
-const secretKey = Buffer.from(process.env.IP_ENCRYPTION_KEY, "utf8");
+const secretKey = Buffer.from("12345678901234567890123456789012", "utf8");
 const iv = Buffer.alloc(16, 0);
 
 
 function decryptIP(encryptedIP) {
-  const secretKey = process.env.IP_ENCRYPTION_KEY;
+  const secretKey = "12345678901234567890123456789012";
   const bytes = CryptoJS.AES.decrypt(encryptedIP, secretKey);
   const decrypted = bytes.toString(CryptoJS.enc.Utf8);
   return decrypted;
