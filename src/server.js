@@ -1,5 +1,6 @@
 // server.js (CommonJS)
 const express = require("express");
+require("dotenv").config();
 const connectDB = require("./config/database");
 const cloudinary = require("cloudinary").v2;
 const userRoutes = require("./routes/userRoutes");
@@ -16,7 +17,7 @@ const SaleActivation = require("./models/SaleActivation");
 const Customer = require("./models/Customer");
 const User = require("./models/User");
 
-require("dotenv").config();
+
 
 const app = express();
 const server = http.createServer(app);

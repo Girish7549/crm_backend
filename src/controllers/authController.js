@@ -62,11 +62,6 @@ const OFFICE_RADIUS_METERS = 10;
 const secretKey = Buffer.from(process.env.IP_ENCRYPTION_KEY, "utf8");
 const iv = Buffer.alloc(16, 0);
 
-/**
- * Decrypt AES-encrypted IP string.
- * @param {string} encryptedIP - base64 encrypted IP from frontend
- * @returns {string} decrypted IP
- */
 
 function decryptIP(encryptedIP) {
   const secretKey = process.env.IP_ENCRYPTION_KEY;
