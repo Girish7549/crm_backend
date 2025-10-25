@@ -49,6 +49,7 @@ const { createDepartment, getDepartments, getDepartmentById, updateDepartment, d
 const { createDesignation, getDesignations, getDesignationById, updateDesignation, deleteDesignation } = require("../controllers/DesignationController");
 const { createOfferLetter, getOfferLetters, getOfferLetterById, updateOfferLetter, deleteOfferLetter, generateOfferLetter, generateAndDownloadOfferLetter } = require("../controllers/offerLetterController");
 const { createFeedback, getAllFeedbacks, getFeedbackByCustomer, deleteFeedback } = require("../controllers/feedbackController");
+const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLeadsByGeneratedBy } = require("../controllers/LeadsController");
 
 // Service Routes
 router.post("/service", createService);
@@ -231,6 +232,14 @@ router.post("/payments", upload.fields([{ name: "paymentProof", maxCount: 2 }]),
 router.get("/payments", getPayments);
 router.get("/payments/:id", getPaymentById);
 router.delete("/payments/:id", deletePaymentById);
+
+// Leads 
+router.post('/lead', createLeads);
+router.get('/lead', getAllLeads);
+router.get('/lead/:id', getLeadsById);
+router.get('/emp-lead/:id', getLeadsByGeneratedBy);
+router.put('/lead/:id', updateLeads);
+router.delete('/lead/:id', deleteLeads);
 
 //Account Company Payment Page
 router.get("/account", getAllAccounts);

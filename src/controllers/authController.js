@@ -60,6 +60,8 @@ const OFFICE_RADIUS_METERS = 10;
 
 // AES decryption config
 const secretKey = Buffer.from("12345678901234567890123456789012", "utf8");
+console.log("secretKey", secretKey);
+
 const iv = Buffer.alloc(16, 0);
 
 
