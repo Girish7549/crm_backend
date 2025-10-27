@@ -16,6 +16,7 @@ const Sales = require("./models/Sales");
 const SaleActivation = require("./models/SaleActivation");
 const Customer = require("./models/Customer");
 const User = require("./models/User");
+const CustomerChat = require("./models/CustomerChat");
 
 
 
@@ -68,6 +69,22 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("joinCustomerRoom", ({ customerId, userId }) => {
+    try {
+      if (customerId) {
+        socket.join(customerId.toString());
+        console.log(`Customer ${customerId} joined their private room`);
+      }
+      if (userId) {
+        socket.join(userId.toString());
+        console.log(`Sales Executive ${userId} joined their customer chat room`);
+      }
+    } catch (err) {
+      console.error("joinCustomerRoom error:", err);
+    }
+  });
+
+
 
   // --------- Global chat ----------------------
   socket.on("chatMessage", async (data) => {
@@ -82,30 +99,30 @@ io.on("connection", (socket) => {
   });
 
   // --------- Private chat ---------------------
-socket.on("privateMessage", async (data) => {
-  const { sender, receiver, message, team } = data || {};
-  try {
-    const savedMsg = await PersonalMessage.create({
-      sender,
-      receiver,
-      message,
-      team,
-    });
+  socket.on("privateMessage", async (data) => {
+    const { sender, receiver, message, team } = data || {};
+    try {
+      const savedMsg = await PersonalMessage.create({
+        sender,
+        receiver,
+        message,
+        team,
+      });
 
-    const populatedMsg = await savedMsg.populate([
-      { path: "sender", select: "name role team" },
-      { path: "receiver", select: "name role team" },
-      { path: "team", select: "name" },
-    ]);
+      const populatedMsg = await savedMsg.populate([
+        { path: "sender", select: "name role team" },
+        { path: "receiver", select: "name role team" },
+        { path: "team", select: "name" },
+      ]);
 
-    // ✅ Emit to both sender and receiver rooms
-    io.to(sender.toString()).emit("privateMessage", populatedMsg);
-    io.to(receiver.toString()).emit("privateMessage", populatedMsg);
+      // ✅ Emit to both sender and receiver rooms
+      io.to(sender.toString()).emit("privateMessage", populatedMsg);
+      io.to(receiver.toString()).emit("privateMessage", populatedMsg);
 
-  } catch (err) {
-    console.error("Message Save Error:", err);
-  }
-});
+    } catch (err) {
+      console.error("Message Save Error:", err);
+    }
+  });
 
 
 
@@ -177,6 +194,41 @@ socket.on("privateMessage", async (data) => {
     });
   });
 
+  // --------- Sales Executive ↔ Customer chat ---------------------
+  socket.on("customerMessage", async (data) => {
+    const { sender, senderType, receiver, receiverType, message } = data || {};
+    if (!sender || !receiver || !senderType || !receiverType || !message) return;
+
+    try {
+      const newMsg = await CustomerChat.create({
+        sender,
+        senderType,
+        receiver,
+        receiverType,
+        message,
+      });
+
+      const populatedMsg = await newMsg.populate([
+        {
+          path: "sender",
+          select: "name email phone",
+          model: senderType === "user" ? "User" : "Customer",
+        },
+        {
+          path: "receiver",
+          select: "name email phone",
+          model: receiverType === "user" ? "User" : "Customer",
+        },
+      ]);
+
+      // 🔹 Emit to both sender and receiver
+      io.to(sender.toString()).emit("customerMessage", populatedMsg);
+      io.to(receiver.toString()).emit("customerMessage", populatedMsg);
+    } catch (err) {
+      console.error("customerMessage error:", err);
+    }
+  });
+
   // --------- Disconnect (mark offline) --------
   socket.on("disconnect", async () => {
     try {
@@ -196,6 +248,9 @@ socket.on("privateMessage", async (data) => {
     }
   });
 });
+
+
+
 
 // ================== Middleware & Routes ==================
 app.use(express.json({ limit: "50mb" }));

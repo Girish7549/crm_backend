@@ -50,6 +50,7 @@ const { createDesignation, getDesignations, getDesignationById, updateDesignatio
 const { createOfferLetter, getOfferLetters, getOfferLetterById, updateOfferLetter, deleteOfferLetter, generateOfferLetter, generateAndDownloadOfferLetter } = require("../controllers/offerLetterController");
 const { createFeedback, getAllFeedbacks, getFeedbackByCustomer, deleteFeedback } = require("../controllers/feedbackController");
 const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLeadsByGeneratedBy } = require("../controllers/LeadsController");
+const { getCustomerChat, getCustomersByUser } = require("../controllers/customerChatController");
 
 // Service Routes
 router.post("/service", createService);
@@ -207,6 +208,10 @@ router.get("/personal", getPersonalMessage);
 router.get("/personal/:userId/:receiverId", getPersonalChat);
 router.get("/personal/team/:teamId", getTeamDMs);
 router.post("/personal", createPersonalMessage);
+
+// Customer <-> Sale Chat 
+router.get("/customer-chat/:userId/:customerId", getCustomerChat);
+router.get("/customersByUser/:id", getCustomersByUser);
 
 // Mac-Address
 router.post("/macAddress", createMacAddress);
