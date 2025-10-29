@@ -157,7 +157,7 @@ const deleteLeads = async (req, res) => {
 
 const sendFormEmail = async (req, res) => {
 
-    const { SMTP_HOST, SMTP_PORT, SMTP_USER_PAYMENT, SMTP_PASS_PAYMENT } = process.env;
+    const { SMTP_HOST, SMTP_PORT, SMTP_USER_OTP, SMTP_PASS_OTP } = process.env;
 
     const { to, link } = req.body;
 
@@ -175,13 +175,13 @@ const sendFormEmail = async (req, res) => {
             port: Number(SMTP_PORT),
             secure: true,
             auth: {
-                user: SMTP_USER_PAYMENT,
-                pass: SMTP_PASS_PAYMENT,
+                user: SMTP_USER_OTP,
+                pass: SMTP_PASS_OTP,
             },
         });
 
         const mailOptions = {
-            from: `"DeemandTV - Sales Team" <${SMTP_USER_PAYMENT}>`,
+            from: `"DeemandTV - Sales Team" <${SMTP_USER_OTP}>`,
             to,
             subject: "Please fill out this form",
             html: `
