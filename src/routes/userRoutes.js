@@ -49,8 +49,9 @@ const { createDepartment, getDepartments, getDepartmentById, updateDepartment, d
 const { createDesignation, getDesignations, getDesignationById, updateDesignation, deleteDesignation } = require("../controllers/DesignationController");
 const { createOfferLetter, getOfferLetters, getOfferLetterById, updateOfferLetter, deleteOfferLetter, generateOfferLetter, generateAndDownloadOfferLetter } = require("../controllers/offerLetterController");
 const { createFeedback, getAllFeedbacks, getFeedbackByCustomer, deleteFeedback } = require("../controllers/feedbackController");
-const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLeadsByGeneratedBy } = require("../controllers/LeadsController");
+const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLeadsByGeneratedBy, sendFormEmail } = require("../controllers/LeadsController");
 const { getCustomerChat, getCustomersByUser } = require("../controllers/customerChatController");
+const { createPaymentLink } = require("../controllers/CashfreePaymentController");
 
 // Service Routes
 router.post("/service", createService);
@@ -238,12 +239,17 @@ router.get("/payments", getPayments);
 router.get("/payments/:id", getPaymentById);
 router.delete("/payments/:id", deletePaymentById);
 
+// Cashfree Payment 
+router.post("/cashfreePaymentLink", createPaymentLink);
+
+
 // Leads 
 router.post('/lead', createLeads);
 router.get('/lead', getAllLeads);
 router.get('/lead/:id', getLeadsById);
 router.get('/emp-lead/:id', getLeadsByGeneratedBy);
 router.put('/lead/:id', updateLeads);
+router.post("/lead/sendFormEmail", sendFormEmail);
 router.delete('/lead/:id', deleteLeads);
 
 //Account Company Payment Page

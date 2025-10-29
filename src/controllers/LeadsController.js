@@ -1,4 +1,9 @@
 const Leads = require("../models/Leads");
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
+const User = require("../models/User");
+
+dotenv.config();
 
 // 🆕 Create Lead
 const createLeads = async (req, res) => {
@@ -28,7 +33,7 @@ const createLeads = async (req, res) => {
 // 🧾 Get All Leads
 const getAllLeads = async (req, res) => {
     try {
-        const leads = await Leads.find().sort({ createdAt: -1 });
+        const leads = await Leads.find().populate('generatedBy', 'name email').sort({ createdAt: -1 });
         res.status(200).json(leads);
     } catch (error) {
         res.status(500).json({
@@ -41,7 +46,7 @@ const getAllLeads = async (req, res) => {
 // 🔍 Get Single Lead by ID
 const getLeadsById = async (req, res) => {
     try {
-        const lead = await Leads.findById(req.params.id);
+        const lead = await Leads.findById(req.params.id).populate('generatedBy', 'name email');
 
         if (!lead) {
             return res.status(404).json({ message: 'Lead not found.' });
@@ -150,10 +155,84 @@ const deleteLeads = async (req, res) => {
     }
 };
 
+const sendFormEmail = async (req, res) => {
+
+    const { SMTP_HOST, SMTP_PORT, SMTP_USER_PAYMENT, SMTP_PASS_PAYMENT } = process.env;
+
+    const { to, link } = req.body;
+
+    try {
+        if (!to || !link) {
+            return res.status(400).json({
+                success: false,
+                message: "Recipient email and form link are required.",
+            });
+        }
+        // const emp = await User.findById(userId).populate()
+
+        const transporter = nodemailer.createTransport({
+            host: SMTP_HOST,
+            port: Number(SMTP_PORT),
+            secure: true,
+            auth: {
+                user: SMTP_USER_PAYMENT,
+                pass: SMTP_PASS_PAYMENT,
+            },
+        });
+
+        const mailOptions = {
+            from: `"DeemandTV - Sales Team" <${SMTP_USER_PAYMENT}>`,
+            to,
+            subject: "Please fill out this form",
+            html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2>Hello Sir/Ma’am,</h2>
+          <p>Your sales executive has shared a form with you.</p>
+
+          <p>
+            Please click the button below to fill out your details:
+          </p>
+
+          <p>
+            <a href="${link}" 
+               style="display:inline-block;padding:12px 24px;background:#28a745;
+                      color:white;border-radius:6px;text-decoration:none;font-weight:bold;">
+              Fill the Form
+            </a>
+          </p>
+
+          <p>If the button doesn’t work, copy this link and open it in your browser:</p>
+          <p><a href="${link}">${link}</a></p>
+
+          <hr/>
+          <p>Best regards,<br/>DeemandTV Sales Team</p>
+        </div>
+      `,
+        };
+
+        // 3️⃣ Send email
+        await transporter.sendMail(mailOptions);
+
+        // 4️⃣ Return success
+        res.status(200).json({
+            success: true,
+            message: "Form link sent successfully",
+        });
+    } catch (error) {
+        console.error("❌ Error sending form link email:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to send form link",
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     createLeads,
     getAllLeads,
     getLeadsById,
+    sendFormEmail,
     getLeadsByGeneratedBy,
     updateLeads,
     deleteLeads
