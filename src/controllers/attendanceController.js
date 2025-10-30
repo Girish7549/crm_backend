@@ -337,12 +337,18 @@ const punchOut = async (req, res) => {
 
     const now = punchOutTime ? new Date(punchOutTime) : new Date();
 
+    const user = await User.findByIdAndUpdate(userId, { isOnline: false })
+    if (!user) {
+      console.log("User not found");
+    }
+
     const record = await Attendance.findOne({
       user: userId,
       punchOut: { $exists: false },
     }).sort({ punchIn: -1 });
 
     if (!record) return res.status(404).json({ message: "No active punch-in found" });
+
 
     record.punchOut = now;
 
