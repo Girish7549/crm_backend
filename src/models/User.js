@@ -5,6 +5,9 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  nickName: {
+    type: String,
+  },
   email: {
     type: String,
     unique: true,
@@ -47,6 +50,11 @@ const UserSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["active", "inactive"]
+  },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Company",
+    required: true
   },
   assignedService: {
     type: mongoose.Schema.Types.ObjectId,
