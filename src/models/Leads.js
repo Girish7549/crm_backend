@@ -82,6 +82,10 @@ const LeadsSchema = new mongoose.Schema({
     isSubscriber: {
         type: Boolean,
         default: false,
+    },
+    OTP: {
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true

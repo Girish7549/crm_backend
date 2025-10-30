@@ -53,6 +53,7 @@ const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLea
 const { getCustomerChat, getCustomersByUser } = require("../controllers/customerChatController");
 const { createPaymentLink } = require("../controllers/CashfreePaymentController");
 const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompany } = require("../controllers/CompanyController");
+const { sendOtpMail, verifyLeadOtp } = require("../controllers/leadOTPController");
 
 // Company Routes
 router.post("/company", createCompany)
@@ -259,6 +260,9 @@ router.get('/emp-lead/:id', getLeadsByGeneratedBy);
 router.put('/lead/:id', updateLeads);
 router.post("/lead/sendFormEmail", sendFormEmail);
 router.delete('/lead/:id', deleteLeads);
+router.post("/sendLead-otp", sendOtpMail);
+router.post("/verifyLead-otp", verifyLeadOtp);
+
 
 //Account Company Payment Page
 router.get("/account", getAllAccounts);
