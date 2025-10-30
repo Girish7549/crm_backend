@@ -16,7 +16,7 @@ const getCustomerChat = async (req, res) => {
         })
             .sort({ createdAt: 1 })
             .populate([
-                { path: "sender", select: "name email phone", model: "User" },
+                { path: "sender", select: "name nickName email phone", model: "User" },
                 { path: "receiver", select: "name email phone", model: "Customer" },
             ]);
 
