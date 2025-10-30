@@ -52,6 +52,14 @@ const { createFeedback, getAllFeedbacks, getFeedbackByCustomer, deleteFeedback }
 const { createLeads, getAllLeads, getLeadsById, updateLeads, deleteLeads, getLeadsByGeneratedBy, sendFormEmail } = require("../controllers/LeadsController");
 const { getCustomerChat, getCustomersByUser } = require("../controllers/customerChatController");
 const { createPaymentLink } = require("../controllers/CashfreePaymentController");
+const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompany } = require("../controllers/CompanyController");
+
+// Company Routes
+router.post("/company", createCompany)
+router.get("/company", getAllCompany)
+router.get("/company/:id", getCompanyById)
+router.put("/company/:id", updateCompany)
+router.delete("/company/:id", deleteCompany)
 
 // Service Routes
 router.post("/service", createService);
