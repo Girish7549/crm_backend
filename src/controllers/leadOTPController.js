@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const LeadOTPJS = require("../models/LeadOTP.JS");
+const LeadOtp = require("../models/LeadOTP")
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -14,7 +14,7 @@ const sendOtpMail = async (req, res) => {
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 10 minutes
 
         // Save OTP in DB
-        await LeadOTPJS.create({ email, code: otpCode, expiresAt: expiry });
+        await LeadOtp.create({ email, code: otpCode, expiresAt: expiry });
 
         const transporter = nodemailer.createTransport({
             host: SMTP_HOST,
