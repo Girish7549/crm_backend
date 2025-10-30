@@ -22,8 +22,7 @@ const getCustomerChat = async (req, res) => {
 
         // Fetch customer to get assigned sales executive
         const customer = await Customer.findById(customerId).populate({
-            path: "createdBy", // assuming this is the sales executive
-            select: "name email phone",
+            path: "createdBy",
         });
 
         return res.status(200).json({
