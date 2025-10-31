@@ -154,54 +154,25 @@ const ActivationSchema = new mongoose.Schema({
   },
 });
 
-// ActivationSchema.pre("findOneAndUpdate", function (next) {
-//   const update = this.getUpdate();
-
-//   const status = update.status || (update.$set && update.$set.status);
-
-//   if (status === "active") {
-//     const oneMonthLater = new Date();
-//     oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-
-//     if (update.$set) {
-//       update.$set.expirationDate = oneMonthLater;
-//     } else {
-//       update.expirationDate = oneMonthLater;
-//     }
-
-//     this.setUpdate(update);
-//   }
-
-//   next();
-// });
-ActivationSchema.pre("findOneAndUpdate", async function (next) {
+ActivationSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
 
-  // Extract the new status from update
-  const newStatus = update.status || (update.$set && update.$set.status);
+  const status = update.status || (update.$set && update.$set.status);
 
-  if (newStatus === "active") {
-    // Fetch the existing document to check previous status
-    const existing = await this.model.findOne(this.getQuery());
+  if (status === "active") {
+    const oneMonthLater = new Date();
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
 
-    // Only set expirationDate if the status was NOT already "active"
-    if (existing && existing.status !== "active") {
-      const monthsToAdd = existing.deviceInfo?.totalMonths || 1;
-      const newExpiration = new Date();
-      newExpiration.setMonth(newExpiration.getMonth() + monthsToAdd);
-
-      if (update.$set) {
-        update.$set.expirationDate = newExpiration;
-      } else {
-        update.expirationDate = newExpiration;
-      }
-
-      this.setUpdate(update);
+    if (update.$set) {
+      update.$set.expirationDate = oneMonthLater;
+    } else {
+      update.expirationDate = oneMonthLater;
     }
+
+    this.setUpdate(update);
   }
 
   next();
 });
-
 
 module.exports = mongoose.model("Activation", ActivationSchema);
