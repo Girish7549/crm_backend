@@ -915,7 +915,7 @@ We assure you of our support for your professional development and growth.
             });
 
             const mailOptions = {
-                from: `"HR Department" <${process.env.FROM_EMAIL}>`,
+                from: `"HR Department" <${process.env.SMTP_USER_HR}>`,
                 to: user.officialMail,
                 subject: "Your Offer Letter - AdzDrio India Services Pvt. Ltd",
                 html: `
