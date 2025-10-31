@@ -909,8 +909,8 @@ We assure you of our support for your professional development and growth.
                 port: process.env.SMTP_PORT || 465,
                 secure: true,
                 auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
+                    user: process.env.SMTP_USER_HR,
+                    pass: process.env.SMTP_PASS_HR,
                 },
             });
 
