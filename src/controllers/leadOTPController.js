@@ -52,14 +52,14 @@ const verifyLeadOtp = async (req, res) => {
         return res.status(400).json({ success: false, message: "Email and OTP are required" });
 
     try {
-        const otpRecord = await LeadOTPJS.findOne({ email, code: otp });
+        const otpRecord = await LeadOtp.findOne({ email, code: otp });
         if (!otpRecord) return res.status(400).json({ success: false, message: "Invalid OTP" });
 
         if (otpRecord.expiresAt < new Date())
             return res.status(400).json({ success: false, message: "OTP expired" });
 
         // OTP verified → delete record
-        await LeadOTPJS.deleteOne({ _id: otpRecord._id });
+        await LeadOtp.deleteOne({ _id: otpRecord._id });
 
         res.status(200).json({ success: true, message: "OTP verified successfully" });
     } catch (error) {
