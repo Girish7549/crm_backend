@@ -17,11 +17,12 @@ const getDollarToInr = async () => {
     try {
         const response = await axios.get(apiUrl);
         const rate = response.data?.quotes?.USDINR;
+        console.log("Dollar in INR :", rate)
         if (!rate) throw new Error("Currency rate not found");
         return rate;
     } catch (error) {
         console.error("Error fetching USD→INR rate:", error.message);
-        return 83.0;
+        return 89.9;
     }
 };
 

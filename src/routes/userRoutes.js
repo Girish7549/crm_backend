@@ -54,6 +54,7 @@ const { getCustomerChat, getCustomersByUser } = require("../controllers/customer
 const { createPaymentLink } = require("../controllers/CashfreePaymentController");
 const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompany } = require("../controllers/CompanyController");
 const { sendOtpMail, verifyLeadOtp } = require("../controllers/leadOTPController");
+const { createPaymentChargeDodo, dodoPaymentCallbakc } = require("../controllers/dodoPaymentController");
 
 // Company Routes
 router.post("/company", createCompany)
@@ -250,6 +251,10 @@ router.delete("/payments/:id", deletePaymentById);
 
 // Cashfree Payment 
 router.post("/cashfreePaymentLink", createPaymentLink);
+
+// DoDo Payment 
+router.post("/create-charge", createPaymentChargeDodo);
+router.post("/payment-callback", dodoPaymentCallbakc);
 
 
 // Leads 
