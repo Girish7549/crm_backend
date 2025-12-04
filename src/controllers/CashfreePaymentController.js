@@ -10,7 +10,7 @@ const { CASHFREE_CLIENT_ID, CASHFREE_CLIENT_SECRET, CASHFREE_BASE_URL, SMTP_HOST
 
 
 const getDollarToInr = async () => {
-    const apiUrl = `https://apilayer.net/api/live?access_key=${process.env.CURRENCY_API}&currencies=INR&source=USD&format=1`;
+    const apiUrl = `https://apilayer.net/api/live?access_key=${CURRENCY_API}&currencies=INR&source=USD&format=1`;
     // const apiUrl = "https://api.freecurrencyapi.com/v1/latest";
     // const apiKey = CURRENCY_API;
 
