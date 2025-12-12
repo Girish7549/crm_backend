@@ -20,7 +20,7 @@ const upload = multer({
     const extname = path.extname(file.originalname).toLowerCase();
     const mimetype = file.mimetype;
 
-    if (["paymentProof", "image", "signtory"].includes(file.fieldname)) {
+    if (["profileImage", "reviewImg", "paymentProof", "image", "signtory"].includes(file.fieldname)) {
       if (imageTypes.test(extname) && mimetype.startsWith("image/")) {
         return cb(null, true);
       } else {
