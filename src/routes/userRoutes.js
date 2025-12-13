@@ -55,7 +55,7 @@ const { createPaymentLink } = require("../controllers/CashfreePaymentController"
 const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompany } = require("../controllers/CompanyController");
 const { sendOtpMail, verifyLeadOtp } = require("../controllers/leadOTPController");
 const { createPaymentChargeDodo, dodoPaymentCallbakc } = require("../controllers/dodoPaymentController");
-const { createReview, getReviews, deleteReview, toggleReviewStatus } = require("../controllers/ReviewController");
+const { createReview, getReviews, deleteReview, toggleReviewStatus, updateReview } = require("../controllers/ReviewController");
 
 // Company Routes
 router.post("/company", createCompany)
@@ -241,10 +241,9 @@ router.get("/adminDashboard", getAdminDashboard);
 router.get("/lock-progress/:customerId", getLockMonthProgress);
 
 // Review Routes
-router.post("/review", upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "reviewImg", maxCount: 1 },]),
-  createReview
-);
 router.get("/review", getReviews);
+router.post("/review", upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "reviewImg", maxCount: 1 },]), createReview);
+router.put("/review/:id", upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "reviewImg", maxCount: 1 },]), updateReview);
 router.delete("/review/:id", deleteReview);
 router.get("/review/:id", toggleReviewStatus);
 

@@ -79,6 +79,63 @@ const getReviews = async (req, res) => {
     }
 };
 
+// ✅ Update a review by ID
+const updateReview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
+
+        const review = await Review.findById(id);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: "Review not found",
+            });
+        }
+
+        // Update text fields
+        if (name) review.name = name;
+        if (reviewTitle) review.reviewTitle = reviewTitle;
+        if (reviewText) review.reviewText = reviewText;
+        if (rating) review.rating = rating;
+        if (dateOfExperience) review.dateOfExperience = dateOfExperience;
+
+        // Update profile image (optional)
+        if (req.files?.profileImage?.length > 0) {
+            const profileImageUrl = await uploadBufferToCloudinary(
+                req.files.profileImage[0].buffer,
+                req.files.profileImage[0].originalname
+            );
+            review.profileImage = profileImageUrl;
+        }
+
+        // Update review image (optional)
+        if (req.files?.reviewImg?.length > 0) {
+            const reviewImgUrl = await uploadBufferToCloudinary(
+                req.files.reviewImg[0].buffer,
+                req.files.reviewImg[0].originalname
+            );
+            review.reviewImg = reviewImgUrl;
+        }
+
+        await review.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Review updated successfully",
+            data: review,
+        });
+    } catch (err) {
+        console.error("Update Review Error:", err);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message,
+        });
+    }
+};
+
+
 // ✅ Delete a review by ID
 const deleteReview = async (req, res) => {
     try {
@@ -113,4 +170,4 @@ const toggleReviewStatus = async (req, res) => {
     }
 };
 
-module.exports = { createReview, getReviews, deleteReview, toggleReviewStatus };
+module.exports = { createReview, getReviews, updateReview, deleteReview, toggleReviewStatus };
