@@ -71,8 +71,11 @@ const getReviews = async (req, res) => {
     try {
         const { activeOnly } = req.query;
         const filter = activeOnly === "true" ? { isActive: true } : {};
-        const reviews = await Review.find(filter).sort({ createdAt: -1 }).populate("user");
-        res.status(200).json({ success: true, data: { reviews, user: reviews.user.name } });
+        let reviews = await Review.find(filter).sort({ createdAt: -1 }).populate("user");
+        if (reviews.user?.name) {
+            reviews.user = reviews.user.name
+        }
+        res.status(200).json({ success: true, data: { reviews } });
     } catch (err) {
         console.error("Get Reviews Error:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
