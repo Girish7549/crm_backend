@@ -72,8 +72,8 @@ const getReviews = async (req, res) => {
         const { activeOnly } = req.query;
         const filter = activeOnly === "true" ? { isActive: true } : {};
         let reviews = await Review.find(filter).sort({ createdAt: -1 }).populate("user");
-        if (reviews.user?.name) {
-            reviews.user = reviews.user.name
+        if (reviews.user?.firstName) {
+            reviews.name = reviews?.user?.firstName + " " + reviews?.user?.lastName
         }
         res.status(200).json({ success: true, data: { reviews } });
     } catch (err) {
