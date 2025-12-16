@@ -17,6 +17,7 @@ const upsertGoogleUser = async (req, res) => {
         if (user) {
             return res.status(409).json({
                 success: false,
+                data: user,
                 message: 'User already exists'
             });
         }
