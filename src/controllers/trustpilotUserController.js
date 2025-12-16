@@ -12,20 +12,16 @@ const upsertGoogleUser = async (req, res) => {
         }
 
         // Check if user exists
-        // let user = await trustpilotUser.findOne({ googleId });
+        let user = await trustpilotUser.findOne({ googleId });
 
-        // if (user) {
-        //     // Update existing user
-        //     user.firstName = firstName;
-        //     user.lastName = lastName;
-        //     user.email = email;
-        //     user.profileImage = profileImage || user.profileImage;
-        //     user.gender = gender || user.gender;
-        //     user.dob = dob || user.dob;
+        if (user) {
+            return res.status(409).json({
+                success: false,
+                message: 'User already exists'
+            });
+        }
 
-        //     await user.save();
-        //     return res.status(200).json({ message: "User updated", user });
-        // } else {
+        // else {
         // }
         // Create new user
         user = new trustpilotUser({
