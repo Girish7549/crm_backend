@@ -12,34 +12,34 @@ const upsertGoogleUser = async (req, res) => {
         }
 
         // Check if user exists
-        let user = await trustpilotUser.findOne({ googleId });
+        // let user = await trustpilotUser.findOne({ googleId });
 
-        if (user) {
-            // Update existing user
-            user.firstName = firstName;
-            user.lastName = lastName;
-            user.email = email;
-            user.profileImage = profileImage || user.profileImage;
-            user.gender = gender || user.gender;
-            user.dob = dob || user.dob;
+        // if (user) {
+        //     // Update existing user
+        //     user.firstName = firstName;
+        //     user.lastName = lastName;
+        //     user.email = email;
+        //     user.profileImage = profileImage || user.profileImage;
+        //     user.gender = gender || user.gender;
+        //     user.dob = dob || user.dob;
 
-            await user.save();
-            return res.status(200).json({ message: "User updated", user });
-        } else {
-            // Create new user
-            user = new trustpilotUser({
-                googleId,
-                firstName,
-                lastName,
-                email,
-                profileImage,
-                gender,
-                dob,
-            });
+        //     await user.save();
+        //     return res.status(200).json({ message: "User updated", user });
+        // } else {
+        // }
+        // Create new user
+        user = new trustpilotUser({
+            googleId,
+            firstName,
+            lastName,
+            email,
+            profileImage,
+            gender,
+            dob,
+        });
 
-            await user.save();
-            return res.status(201).json({ message: "User created", user });
-        }
+        await user.save();
+        return res.status(201).json({ message: "User created", user });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "Server error", error: err.message });
