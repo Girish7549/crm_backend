@@ -71,21 +71,8 @@ const getReviews = async (req, res) => {
     try {
         const { activeOnly } = req.query;
         const filter = activeOnly === "true" ? { isActive: true } : {};
-        const reviews = await Review.find(filter)
-            .sort({ createdAt: -1 })
-            .populate("user", "firstName lastName");
-
-        const formattedReviews = reviews.map(review => ({
-            ...review.toObject(),
-            name: review.user
-                ? `${review.user.firstName} ${review.user.lastName}`.trim()
-                : null
-        }));
-
-        res.status(200).json({
-            success: true,
-            data: formattedReviews
-        });
+        const reviews = await Review.find(filter).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: reviews });
     } catch (err) {
         console.error("Get Reviews Error:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
