@@ -2,11 +2,15 @@ const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
     {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "TrustpilotUser",
         },
+        // name: {
+        //     type: String,
+        //     required: true,
+        //     trim: true,
+        // },
         reviewTitle: {
             type: String,
             required: true,
@@ -27,9 +31,9 @@ const reviewSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
-        profileImage: {
-            type: String, // store image path or URL
-        },
+        // profileImage: {
+        //     type: String, // store image path or URL
+        // },
         reviewImg: {
             type: String, // store image path or URL
         },

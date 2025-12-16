@@ -24,21 +24,21 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
 // ✅ Create a new review
 const createReview = async (req, res) => {
     try {
-        const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
+        const { user, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
 
-        if (!name || !reviewTitle || !reviewText || !rating || !dateOfExperience) {
+        if (!user || !reviewTitle || !reviewText || !rating || !dateOfExperience) {
             return res.status(400).json({ success: false, message: "All fields are required." });
         }
 
-        let profileImageUrl = null;
+        // let profileImageUrl = null;
         let serviceImageUrl = null;
 
-        if (req.files?.profileImage?.length > 0) {
-            profileImageUrl = await uploadBufferToCloudinary(
-                req.files.profileImage[0].buffer,
-                req.files.profileImage[0].originalname
-            );
-        }
+        // if (req.files?.profileImage?.length > 0) {
+        //     profileImageUrl = await uploadBufferToCloudinary(
+        //         req.files.profileImage[0].buffer,
+        //         req.files.profileImage[0].originalname
+        //     );
+        // }
 
         if (req.files?.reviewImg?.length > 0) {
             serviceImageUrl = await uploadBufferToCloudinary(
@@ -48,12 +48,12 @@ const createReview = async (req, res) => {
         }
 
         const review = new Review({
-            name,
+            user,
             reviewTitle,
             reviewText,
             rating,
             dateOfExperience,
-            profileImage: profileImageUrl,
+            // profileImage: profileImageUrl,
             reviewImg: serviceImageUrl,
             isActive: true, // default active
         });
@@ -83,7 +83,8 @@ const getReviews = async (req, res) => {
 const updateReview = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
+        // const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
+        const { reviewTitle, reviewText, rating, dateOfExperience } = req.body;
 
         const review = await Review.findById(id);
         if (!review) {
@@ -94,7 +95,7 @@ const updateReview = async (req, res) => {
         }
 
         // Update text fields
-        if (name) review.name = name;
+        // if (name) review.name = name;
         if (reviewTitle) review.reviewTitle = reviewTitle;
         if (reviewText) review.reviewText = reviewText;
         if (rating) review.rating = rating;

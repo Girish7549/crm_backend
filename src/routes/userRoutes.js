@@ -56,6 +56,7 @@ const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompa
 const { sendOtpMail, verifyLeadOtp } = require("../controllers/leadOTPController");
 const { createPaymentChargeDodo, dodoPaymentCallbakc } = require("../controllers/dodoPaymentController");
 const { createReview, getReviews, deleteReview, toggleReviewStatus, updateReview } = require("../controllers/ReviewController");
+const { upsertGoogleUser, getTrustpilotUserById, getAllTruspilotUser, updateTrustpilotUser, deleteTruspilotUser } = require("../controllers/trustpilotUserController")
 
 // Company Routes
 router.post("/company", createCompany)
@@ -246,6 +247,13 @@ router.post("/review", upload.fields([{ name: "profileImage", maxCount: 1 }, { n
 router.put("/review/:id", upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "reviewImg", maxCount: 1 },]), updateReview);
 router.delete("/review/:id", deleteReview);
 router.get("/review/:id", toggleReviewStatus);
+
+// Trustpilot user
+router.post("/trustpilotUser/create", upsertGoogleUser);
+router.get("/trustpilotUser/users", getAllTruspilotUser);
+router.get("/trustpilotUser/user/:id", getTrustpilotUserById);
+router.put("/trustpilotUser/user/:id", updateTrustpilotUser);
+router.delete("/trustpilotUser/user/:id", deleteTruspilotUser);
 
 
 // Admin Data
