@@ -84,7 +84,7 @@ const updateReview = async (req, res) => {
     try {
         const { id } = req.params;
         // const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
-        const { reviewTitle, reviewText, rating, dateOfExperience } = req.body;
+        const { reviewTitle, reviewText, rating, comment, like, dateOfExperience } = req.body;
 
         const review = await Review.findById(id);
         if (!review) {
@@ -99,6 +99,8 @@ const updateReview = async (req, res) => {
         if (reviewTitle) review.reviewTitle = reviewTitle;
         if (reviewText) review.reviewText = reviewText;
         if (rating) review.rating = rating;
+        if (comment) review.comment = comment;
+        if (like) review.like = like;
         if (dateOfExperience) review.dateOfExperience = dateOfExperience;
 
         // Update profile image (optional)
