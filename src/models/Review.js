@@ -2,15 +2,15 @@ const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
     {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "TrustpilotUser",
-        },
         // name: {
         //     type: String,
         //     required: true,
         //     trim: true,
         // },
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "TrustpilotUser",
+        },
         reviewTitle: {
             type: String,
             required: true,
@@ -26,6 +26,13 @@ const reviewSchema = new mongoose.Schema(
             required: true,
             min: 1,
             max: 5,
+        },
+        like: {
+            type: Boolean,
+            default: false,
+        },
+        comment: {
+            type: String
         },
         dateOfExperience: {
             type: Date,
