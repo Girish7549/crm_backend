@@ -75,11 +75,24 @@ const getReviews = async (req, res) => {
         const skip = (page - 1) * limit;
         const filter = activeOnly === "true" ? { isActive: true } : {};
         const reviews = await Review.find(filter)
-        .populate("user")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
-        res.status(200).json({ success: true, data: reviews });
+            .populate("user")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await Review.countDocuments();
+
+        res.status(200).json(
+            {
+                success: true,
+                data: reviews,
+                pagination: {
+                    totalItems: total,
+                    currentPage: page,
+                    totalPages: Math.ceil(total / limit),
+                    perPage: limit,
+                },
+            });
     } catch (err) {
         console.error("Get Reviews Error:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
