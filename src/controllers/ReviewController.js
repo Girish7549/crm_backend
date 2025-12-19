@@ -80,7 +80,7 @@ const getReviews = async (req, res) => {
         //         )
         //         : false,
         // }));
-        res.status(200).json({ success: true, data: formattedReviews });
+        res.status(200).json({ success: true, data: reviews });
     } catch (err) {
         console.error("Get Reviews Error:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
