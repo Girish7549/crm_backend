@@ -55,7 +55,7 @@ const { createPaymentLink } = require("../controllers/CashfreePaymentController"
 const { createCompany, getAllCompany, getCompanyById, updateCompany, deleteCompany } = require("../controllers/CompanyController");
 const { sendOtpMail, verifyLeadOtp } = require("../controllers/leadOTPController");
 const { createPaymentChargeDodo, dodoPaymentCallbakc } = require("../controllers/dodoPaymentController");
-const { createReview, getReviews, deleteReview, toggleReviewStatus, updateReview } = require("../controllers/ReviewController");
+const { createReview, getReviews, deleteReview, toggleReviewStatus, updateReview, toggleReviewLike } = require("../controllers/ReviewController");
 const { upsertGoogleUser, getTrustpilotUserById, getAllTruspilotUser, updateTrustpilotUser, deleteTruspilotUser } = require("../controllers/trustpilotUserController")
 
 // Company Routes
@@ -247,6 +247,7 @@ router.post("/review", upload.fields([{ name: "profileImage", maxCount: 1 }, { n
 router.put("/review/:id", upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "reviewImg", maxCount: 1 },]), updateReview);
 router.delete("/review/:id", deleteReview);
 router.get("/review/:id", toggleReviewStatus);
+router.put("/toggle-review", toggleReviewLike);
 
 // Trustpilot user
 router.post("/trustpilotUser/create", upsertGoogleUser);

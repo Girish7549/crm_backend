@@ -72,7 +72,15 @@ const getReviews = async (req, res) => {
         const { activeOnly } = req.query;
         const filter = activeOnly === "true" ? { isActive: true } : {};
         const reviews = await Review.find(filter).sort({ createdAt: -1 }).populate("user");
-        res.status(200).json({ success: true, data: reviews });
+        const formattedReviews = reviews.map((review) => ({
+            ...review.toObject(),
+            isLiked: userId
+                ? review.likeUser.some(
+                    (id) => id.toString() === userId.toString()
+                )
+                : false,
+        }));
+        res.status(200).json({ success: true, data: formattedReviews });
     } catch (err) {
         console.error("Get Reviews Error:", err);
         res.status(500).json({ success: false, message: "Server error", error: err.message });
@@ -84,7 +92,7 @@ const updateReview = async (req, res) => {
     try {
         const { id } = req.params;
         // const { name, reviewTitle, reviewText, rating, dateOfExperience } = req.body;
-        const { reviewTitle, reviewText, rating, comment, like, dateOfExperience } = req.body;
+        const { reviewTitle, reviewText, rating, comment, dateOfExperience } = req.body;
 
         const review = await Review.findById(id);
         if (!review) {
@@ -100,7 +108,6 @@ const updateReview = async (req, res) => {
         if (reviewText) review.reviewText = reviewText;
         if (rating) review.rating = rating;
         if (comment) review.comment = comment;
-        if (like) review.like = like;
         if (dateOfExperience) review.dateOfExperience = dateOfExperience;
 
         // Update profile image (optional)
@@ -173,4 +180,45 @@ const toggleReviewStatus = async (req, res) => {
     }
 };
 
-module.exports = { createReview, getReviews, updateReview, deleteReview, toggleReviewStatus };
+const toggleReviewLike = async (req, res) => {
+    try {
+        // const { id } = req.params
+        const { id, userId } = req.body
+        const review = await Review.findById(id)
+
+        if (!review) {
+            return res.status(404).json({ success: false, message: "Review not found" });
+        }
+
+        const alreadyLiked = review.likeUser.some(
+            (uid) => uid.toString() === userId.toString()
+        );
+
+        if (alreadyLiked) {
+            review.likeUser = review.likeUser.filter(
+                (uid) => uid.toString() !== userId.toString()
+            );
+        } else {
+            review.likeUser.push(userId);
+        }
+
+        review.like = review.likeUser.length;
+
+        await review.save();
+
+        res.status(200).json({
+            success: true,
+            liked: !alreadyLiked,
+            likes: review.like,
+        });
+
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        })
+    }
+}
+
+module.exports = { createReview, getReviews, updateReview, deleteReview, toggleReviewStatus, toggleReviewLike };

@@ -28,9 +28,16 @@ const reviewSchema = new mongoose.Schema(
             max: 5,
         },
         like: {
-            type: Boolean,
-            default: false,
+            type: Number,
+            default: 0,
         },
+
+        likeUser: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "TrustpilotUser",
+            },
+        ],
         comment: {
             type: String
         },
