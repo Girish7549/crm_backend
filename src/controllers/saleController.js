@@ -906,8 +906,8 @@ const uploadBufferToCloudinary = (buffer, originalname, type = "image") => {
       {
         folder: type === "audio" ? "sales/voiceNotes" : "sales/paymentProofs",
         use_filename: true,
-        public_id: originalname.split(".")[0].trim(),
-        unique_filename: false,
+        public_id: `${originalname.split(".")[0].trim()}_${Date.now()}`,
+        // unique_filename: false,
         resource_type: type === "audio" ? "video" : "image",
       },
       (error, result) => {
